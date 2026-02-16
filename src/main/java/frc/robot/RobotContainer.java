@@ -38,6 +38,7 @@ public class RobotContainer {
    // private final CommandXboxController joystick = new CommandXboxController(0);
     public Joystick driverController = new Joystick(0);
     public Joystick opPanel = new Joystick(1);
+    public Joystick testPanel = new Joystick(2);
  // Driver Controller //
     public final Trigger driverA = new Trigger(() -> driverController.getRawButton(1));
     public final Trigger driverB = new Trigger(() -> driverController.getRawButton(2));
@@ -52,6 +53,44 @@ public class RobotContainer {
     public final Trigger driverPadUp = new Trigger(()-> driverController.getPOV(0) == 0);
     public final Trigger driverPadDown = new Trigger(()-> driverController.getPOV(0)==180);
    
+ // Operator Panel //
+    public final Trigger op1 = new Trigger(() -> opPanel.getRawButton(1));
+    public final Trigger op2 = new Trigger(() -> opPanel.getRawButton(2));
+    public final Trigger op3 = new Trigger(() -> opPanel.getRawButton(3));
+    public final Trigger op4 = new Trigger(() -> opPanel.getRawButton(4));
+    public final Trigger op5 = new Trigger(() -> opPanel.getRawButton(5));
+    public final Trigger op6 = new Trigger(() -> opPanel.getRawButton(6));
+    public final Trigger op7 = new Trigger(() -> opPanel.getRawButton(7));
+    public final Trigger op8 = new Trigger(() -> opPanel.getRawButton(8));
+    public final Trigger op9 = new Trigger(() -> opPanel.getRawButton(9));
+    public final Trigger op10 = new Trigger(() ->opPanel.getRawButton(10));
+    public final Trigger op11 = new Trigger(() ->opPanel.getRawButton(11));
+    public final Trigger op12 = new Trigger(() ->opPanel.getRawButton(12));
+    public final Trigger op13 = new Trigger(() ->opPanel.getRawButton(13));
+    public final Trigger op14 = new Trigger(() ->opPanel.getRawButton(14));
+    public final Trigger op15 = new Trigger(() ->opPanel.getRawButton(15));
+    public final Trigger op16 = new Trigger(() ->opPanel.getRawButton(16));
+    public final Trigger op17 = new Trigger(() ->opPanel.getRawButton(17));
+    public final Trigger op18 = new Trigger(() ->opPanel.getRawButton(18));
+    public final Trigger op19 = new Trigger(() ->opPanel.getRawButton(19));
+    public final Trigger op20 = new Trigger(() ->opPanel.getRawButton(20));
+    public final Trigger op21 = new Trigger(() ->opPanel.getRawButton(21));
+    public final Trigger op22 = new Trigger(() ->opPanel.getRawButton(22));
+    public final Trigger op23 = new Trigger(() ->opPanel.getRawButton(23));
+    public final Trigger op24 = new Trigger(() ->opPanel.getRawButton(24));
+
+    // Test panel // 
+    public final Trigger test1 = new Trigger(() -> testPanel.getRawButton(1));
+    public final Trigger test2 = new Trigger(() -> testPanel.getRawButton(2));
+    public final Trigger test3 = new Trigger(() -> testPanel.getRawButton(3));
+    public final Trigger test4 = new Trigger(() -> testPanel.getRawButton(4));
+    public final Trigger test5 = new Trigger(() -> testPanel.getRawButton(5));
+    public final Trigger test6 = new Trigger(() -> testPanel.getRawButton(6));
+    public final Trigger test7 = new Trigger(() -> testPanel.getRawButton(7));
+    public final Trigger test8 = new Trigger(() -> testPanel.getRawButton(8));
+    public final Trigger test9 = new Trigger(() -> testPanel.getRawButton(9));
+    public final Trigger test10 = new Trigger(() ->testPanel.getRawButton(10));
+
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     public RobotContainer() {
@@ -85,12 +124,12 @@ public class RobotContainer {
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
        
-       /* 
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-*/
+       
+        test1.and(test2).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        test3.and(test4).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        test5.and(test6).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        test7.and(test8).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+
         // Reset the field-centric heading on left bumper press.
         driverRB.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
