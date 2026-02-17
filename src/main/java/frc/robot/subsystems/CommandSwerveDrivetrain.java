@@ -282,6 +282,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         SmartDashboard.putData("field2d", this.field);
         this.field.setRobotPose(getState().Pose);
+
+        SmartDashboard.putNumber("D_Front/Back Distance", getState().Pose.getX());
+        SmartDashboard.putNumber("D_Front/Back Velocity", getState().Speeds.vxMetersPerSecond);
     }
 
     private void startSimThread() {
