@@ -21,9 +21,11 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakePivot;
+import frc.robot.subsystems.Conveyer;
 
 public class RobotContainer {
     public final IntakePivot pivot = new IntakePivot();
+    public final Conveyer conveyer = new Conveyer();
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double AngularRate = Math.PI * 2.5;
@@ -49,7 +51,8 @@ public class RobotContainer {
     public final Trigger driverStart = new Trigger(() -> driverController.getRawButton(8));
 
     public final Trigger driverRT = new Trigger(() -> driverController.getRawAxis(3) > 0.5);
-    public final Trigger driverLT = new Trigger(() -> driverController.getRawAxis(2) > 0.5);      public final Trigger driverLB = new Trigger(() -> driverController.getRawButton(5));
+    public final Trigger driverLT = new Trigger(() -> driverController.getRawAxis(2) > 0.5);      
+    public final Trigger driverLB = new Trigger(() -> driverController.getRawButton(5));
 
     public final Trigger driverRB = new Trigger(() -> driverController.getRawButton(6));
     public final Trigger driverPadUp = new Trigger(()-> driverController.getPOV(0) == 0);
@@ -96,7 +99,6 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     
     public RobotContainer() {
-        pivot.setDefaultCommand(pivot.setAngle(Degrees.of(0)));
         configureBindings();
     }
 
@@ -113,12 +115,12 @@ public class RobotContainer {
         );
         // Schedule `setAngle` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverX.whileTrue(pivot.setAngle(Degrees.of(-5)));
+        driverX.whileTrue(pivot.setAngle(Degrees.of(0)));
         driverY.whileTrue(pivot.setAngle(Degrees.of(15)));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverRT.whileTrue(pivot.set(0.3));
-        driverLT.whileTrue(pivot.set(-0.3));
+      //  driverRT.whileTrue(pivot.set(0.3));
+        driverLT.whileTrue(conveyer.setSpeedCommand(0.5));
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();

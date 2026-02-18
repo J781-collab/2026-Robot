@@ -11,6 +11,8 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Pounds;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
@@ -39,50 +41,54 @@ import com.revrobotics.spark.SparkMax;
 
 public class IntakePivot extends SubsystemBase {
 
+  private SmartMotorControllerConfig smcConfig;
+  private SparkMax spark;
+  private SmartMotorController sparkSmartMotorController;
+  private ArmConfig armCfg;
+  private Arm arm;
+
   /** Creates a new IntakePivot. */
-    private SmartMotorControllerConfig smcConfig = new SmartMotorControllerConfig(this)
-  .withControlMode(ControlMode.CLOSED_LOOP)
-  // Feedback Constants (PID Constants)
-  .withClosedLoopController(50, 0, 0, DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
-  .withSimClosedLoopController(50, 0, 0, DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
-  // Feedforward Constants
-  .withFeedforward(new ArmFeedforward(0, 0, 0))
-  .withSimFeedforward(new ArmFeedforward(0, 0, 0))
-  // Telemetry name and verbosity level
-  .withTelemetry("ArmMotor", TelemetryVerbosity.HIGH)
-  // Gearing from the motor rotor to final shaft.
-  // In this example GearBox.fromReductionStages(3,4) is the same as GearBox.fromStages("3:1","4:1") which corresponds to the gearbox attached to your motor.
-  // You could also use .withGearing(12) which does the same thing.
-  .withGearing(new MechanismGearing(GearBox.fromReductionStages(3, 4)))
-  // Motor properties to prevent over currenting.
-  .withMotorInverted(false)
-  .withIdleMode(MotorMode.BRAKE)
-  .withStatorCurrentLimit(Amps.of(40))
-  .withClosedLoopRampRate(Seconds.of(0.25))
-  .withOpenLoopRampRate(Seconds.of(0.25));
+  public IntakePivot() {
+    smcConfig = new SmartMotorControllerConfig(this)
+      .withControlMode(ControlMode.CLOSED_LOOP)
+      // Feedback Constants (PID Constants)
+      .withClosedLoopController(50, 0, 0, DegreesPerSecond.of(9), DegreesPerSecondPerSecond.of(5))
+      .withSimClosedLoopController(500, 0, 0, DegreesPerSecond.of(9), DegreesPerSecondPerSecond.of(5))
+      // Feedforward Constants
+      .withFeedforward(new ArmFeedforward(0, 0, 0))
+      .withSimFeedforward(new ArmFeedforward(0, 0, 0))
+      // Telemetry name and verbosity level
+      .withTelemetry("ArmMotor", TelemetryVerbosity.HIGH)
+      // Gearing from the motor rotor to final shaft.
+      // In this example GearBox.fromReductionStages(3,4) is the same as GearBox.fromStages("3:1","4:1") which corresponds to the gearbox attached to your motor.
+      // You could also use .withGearing(12) which does the same thing.
+      .withGearing(new MechanismGearing(GearBox.fromReductionStages(3, 4)))
+      // Motor properties to prevent over currenting.
+      .withMotorInverted(false)
+      .withIdleMode(MotorMode.BRAKE)
+      .withStatorCurrentLimit(Amps.of(40))
+      .withClosedLoopRampRate(Seconds.of(0.25))
+      .withOpenLoopRampRate(Seconds.of(0.25));
 
-    private SparkMax spark = new SparkMax(4, MotorType.kBrushless);  
+    spark = new SparkMax(20, MotorType.kBrushless);
+    sparkSmartMotorController = new SparkWrapper(spark, DCMotor.getNEO(1), smcConfig);
+    
+    armCfg = new ArmConfig(sparkSmartMotorController)
+      // Soft limit is applied to the SmartMotorControllers PID
+      .withSoftLimits(Degrees.of(-40), Degrees.of(40))
+      // Hard limit is applied to the simulation.
+      .withHardLimit(Degrees.of(-80), Degrees.of(80))
+      // Starting position is where your arm starts
+      .withStartingPosition(Degrees.of(-5))
+      // Length and mass of your arm for sim.
+      .withLength(Feet.of(1))
+      .withMass(Pounds.of(1))
+      // Telemetry name and verbosity for the arm.
+      .withTelemetry("Arm", TelemetryVerbosity.HIGH);
 
-    private SmartMotorController sparkSmartMotorController = new SparkWrapper(spark, DCMotor.getNEO(1), smcConfig);
-
-          private ArmConfig armCfg = new ArmConfig(sparkSmartMotorController)
-
-            // Vendor motor controller object
-            // Create our SmartMotorController from our Spark and config with the NEO.
-            // Soft limit is applied to the SmartMotorControllers PID
-            .withSoftLimits(Degrees.of(-20), Degrees.of(10))
-            // Hard limit is applied to the simulation.
-            .withHardLimit(Degrees.of(-30), Degrees.of(40))
-            // Starting position is where your arm starts
-            .withStartingPosition(Degrees.of(-5))
-            // Length and mass of your arm for sim.
-            .withLength(Feet.of(3))
-            .withMass(Pounds.of(1))
-            // Telemetry name and verbosity for the arm.
-            .withTelemetry("Arm", TelemetryVerbosity.HIGH);
-  private Arm arm = new Arm(armCfg);
-
-  public IntakePivot() {}
+    arm = new Arm(armCfg);
+    System.out.println("IntakePivot initialized successfully");
+  }
 
 
   // Arm Mechanism
@@ -123,7 +129,8 @@ public class IntakePivot extends SubsystemBase {
 public void periodic() {
     // This method will be called once per scheduler run
     arm.updateTelemetry();
-    // This method will be called once per scheduler run
+    SmartDashboard.putNumber("Arm Angle", arm.getMechanismSetpoint().orElse(Degrees.of(0)).in(Degrees));
+    SmartDashboard.putNumber("Mechanism Position Setpoint", arm.getMechanismSetpoint().orElse(Degrees.of(0)).in(Degrees));
   }
 
 public void simulationPeriodic() {
