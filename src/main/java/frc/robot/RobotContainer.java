@@ -20,12 +20,14 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.InputPivot;
 
 public class RobotContainer {
+    public final InputPivot pivot = new InputPivot();
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double AngularRate = Math.PI * 2.5;
-
+    // Set the default command to force the arm to go to 0.
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
@@ -34,7 +36,7 @@ public class RobotContainer {
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
-
+    
    // private final CommandXboxController joystick = new CommandXboxController(0);
     public Joystick driverController = new Joystick(0);
     public Joystick opPanel = new Joystick(1);
@@ -92,8 +94,9 @@ public class RobotContainer {
     public final Trigger test10 = new Trigger(() ->testPanel.getRawButton(10));
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-
+    
     public RobotContainer() {
+        pivot.setDefaultCommand(pivot.setAngle(Degrees.of(0)));
         configureBindings();
     }
 
@@ -108,7 +111,14 @@ public class RobotContainer {
                         .withRotationalRate( ((driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
                     )
         );
-
+        // Schedule `setAngle` when the Xbox controller's B button is pressed,
+        // cancelling on release.
+        driverX.whileTrue(pivot.setAngle(Degrees.of(-5)));
+        driverY.whileTrue(pivot.setAngle(Degrees.of(15)));
+        // Schedule `set` when the Xbox controller's B button is pressed,
+        // cancelling on release.
+        driverRT.whileTrue(pivot.set(0.3));
+        driverLT.whileTrue(pivot.set(-0.3));
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
@@ -120,11 +130,11 @@ public class RobotContainer {
         driverB.whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(driverController.getRawAxis(1), driverController.getRawAxis(0)))
         ));
-
+    
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
        
-       
+        
         test1.and(test2).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         test3.and(test4).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         test5.and(test6).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
