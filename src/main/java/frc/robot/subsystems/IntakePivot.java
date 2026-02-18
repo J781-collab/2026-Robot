@@ -37,8 +37,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
   
 
-public class InputPivot extends SubsystemBase {
-  /** Creates a new InputPivot. */
+public class IntakePivot extends SubsystemBase {
+
+  /** Creates a new IntakePivot. */
     private SmartMotorControllerConfig smcConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
   // Feedback Constants (PID Constants)
@@ -59,27 +60,32 @@ public class InputPivot extends SubsystemBase {
   .withStatorCurrentLimit(Amps.of(40))
   .withClosedLoopRampRate(Seconds.of(0.25))
   .withOpenLoopRampRate(Seconds.of(0.25));
-  public InputPivot() {}
 
-  // Vendor motor controller object
-  private SparkMax spark = new SparkMax(4, MotorType.kBrushless);  
-  // Create our SmartMotorController from our Spark and config with the NEO.
-  private SmartMotorController sparkSmartMotorController = new SparkWrapper(spark, DCMotor.getNEO(1), smcConfig);
-    private ArmConfig armCfg = new ArmConfig(sparkSmartMotorController)
-  // Soft limit is applied to the SmartMotorControllers PID
-  .withSoftLimits(Degrees.of(-20), Degrees.of(10))
-  // Hard limit is applied to the simulation.
-  .withHardLimit(Degrees.of(-30), Degrees.of(40))
-  // Starting position is where your arm starts
-  .withStartingPosition(Degrees.of(-5))
-  // Length and mass of your arm for sim.
-  .withLength(Feet.of(3))
-  .withMass(Pounds.of(1))
-  // Telemetry name and verbosity for the arm.
-  .withTelemetry("Arm", TelemetryVerbosity.HIGH);
+    private SparkMax spark = new SparkMax(4, MotorType.kBrushless);  
+
+    private SmartMotorController sparkSmartMotorController = new SparkWrapper(spark, DCMotor.getNEO(1), smcConfig);
+
+          private ArmConfig armCfg = new ArmConfig(sparkSmartMotorController)
+
+            // Vendor motor controller object
+            // Create our SmartMotorController from our Spark and config with the NEO.
+            // Soft limit is applied to the SmartMotorControllers PID
+            .withSoftLimits(Degrees.of(-20), Degrees.of(10))
+            // Hard limit is applied to the simulation.
+            .withHardLimit(Degrees.of(-30), Degrees.of(40))
+            // Starting position is where your arm starts
+            .withStartingPosition(Degrees.of(-5))
+            // Length and mass of your arm for sim.
+            .withLength(Feet.of(3))
+            .withMass(Pounds.of(1))
+            // Telemetry name and verbosity for the arm.
+            .withTelemetry("Arm", TelemetryVerbosity.HIGH);
+  private Arm arm = new Arm(armCfg);
+
+  public IntakePivot() {}
+
 
   // Arm Mechanism
-  private Arm arm = new Arm(armCfg);
   
   /**
    * Set the angle of the arm, does not stop when the arm reaches the setpoint.
@@ -94,13 +100,13 @@ public class InputPivot extends SubsystemBase {
    * @param angle Angle to go to.
    * @return A Command
    */
-  public Command setAngleAndStop(Angle angle) { return arm.runTo(angle);}
-  
+  public Command setAngleAndStop(Angle angle, Angle tolerance) { return arm.runTo(angle, tolerance);}
+
   /**
    * Set arm closed loop controller to go to the specified mechanism position.
    * @param angle Angle to go to.
    */
-  public void setAngleSetpoint(Angle angle) { arm.setMechanismPosition(angle); }
+  public void setAngleSetpoint(Angle angle) { arm.setMechanismPositionSetpoint(angle); }
 
   /**
    * Move the arm up and down.
@@ -123,4 +129,5 @@ public void periodic() {
 public void simulationPeriodic() {
   // This method will be called once per scheduler run during simulation
   arm.simIterate();
+}
 }
