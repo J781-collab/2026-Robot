@@ -12,8 +12,10 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -26,7 +28,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.util.Vision;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -51,6 +57,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+
+    /* Limelight vision */
+    private Vision kLimelight = new Vision("limelight", this);
+
+    /* AprilTag field layout */
+    private AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -280,6 +292,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
+        /* Limelight vision integration */
+        SmartDashboard.putBoolean("Limelight TV", kLimelight.getTV());
+        if (kLimelight.getTV()) {
+            addVisionMeasurement(
+                kLimelight.getEstimatedRoboPose(),
+                Utils.fpgaToCurrentTime(kLimelight.getTimestamp()),
+                kLimelight.getStandardDeviations()
+            );
+        }
+
         SmartDashboard.putData("field2d", this.field);
         this.field.setRobotPose(getState().Pose);
 
@@ -345,5 +367,48 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
+    }
+
+    /**
+     * Gets the current robot pose.
+     * @return Current robot pose
+     */
+    public Pose2d getPose() {
+        return getState().Pose;
+    }
+
+    /**
+     * Gets the pose of a specific AprilTag on the field.
+     * @param AprilTagID The ID of the AprilTag
+     * @return Pose2d of the AprilTag
+     */
+    public Pose2d getTagPose(int AprilTagID) {
+        return kFieldLayout.getTagPose(AprilTagID).get().toPose2d();
+    }
+
+    /**
+     * Gets the relative translation from the robot to a specific AprilTag.
+     * @param apriltagID The ID of the AprilTag
+     * @return Translation2d relative to the AprilTag
+     */
+    public Translation2d getTranslationRelative(int apriltagID) {
+        return getPose().getTranslation()
+            .minus(
+                kFieldLayout.getTagPose(apriltagID).get().getTranslation().toTranslation2d()
+            );
+    }
+
+    /**
+     * Gets the relative rotation from the robot to a specific AprilTag.
+     * @param apriltagID The ID of the AprilTag
+     * @return Rotation2d relative to the AprilTag
+     */
+    public Rotation2d getRotationRelative(int apriltagID) {
+        return getPose().getTranslation()
+            .minus(
+                getTagPose(apriltagID).getTranslation()
+            )
+            .unaryMinus()
+            .getAngle();
     }
 }

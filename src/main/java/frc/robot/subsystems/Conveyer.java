@@ -33,7 +33,7 @@ public class Conveyer extends SubsystemBase {
         .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(40);
 
-      motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+      motor.configure(motorConfig, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
     } catch (Exception ex) {
       DriverStation.reportError("Failed to configure Conveyer Subsystem", ex.getStackTrace());
     }
