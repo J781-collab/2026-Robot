@@ -119,8 +119,10 @@ public class RobotContainer {
         driverY.whileTrue(pivot.setAngle(Degrees.of(15)));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-      //  driverRT.whileTrue(pivot.set(0.3));
+        driverRT.whileTrue(pivot.set(0.3));
         driverLT.whileTrue(conveyer.setSpeedCommand(0.5));
+        driverLB.whileTrue(conveyer.setSpeedCommand(-0.5));
+        driverRB.whileTrue(getAutonomousCommand());
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();

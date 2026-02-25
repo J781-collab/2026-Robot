@@ -1,3 +1,5 @@
+package frc.robot.subsystems;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -57,3 +59,4 @@ public class Feeder extends SubsystemBase {
   public void stop() {
     feederMotor.set(0);
   }
+}
