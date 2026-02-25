@@ -95,6 +95,27 @@ public class Constants {
         public static int rangeSensorPort = 1;
     }
 
+    public final static class IntakePivotConstants {
+        public static class IntakePivotPID {
+            public static double P = 0.005;
+            public static double I = 0.0;
+            public static double D = 0.0009;
+        }
+
+        // Encoder reading * 360 = degrees
+        public static double maxPivotPos = 96;
+        public static double minPivotPos = -0.1;
+
+        // Preset positions (degrees)
+        public static double idlePosition = 0.0;
+        public static double intakePosition = 15.0;
+
+        public static int encoderID = 35;
+        public static double encoderOffset = 0.0;
+        public static int leaderMotorID = 20;
+        public static int followMotorID = 0; // Set to 0 if no follower
+    }
+
     public final class ClimberConstants {
         public static int leaderMotorID = 51;
         public static int followMotorID = 52;
