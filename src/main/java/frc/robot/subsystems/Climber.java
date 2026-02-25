@@ -14,7 +14,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
 
-public class Climber1 extends SubsystemBase {
+public class Climber extends SubsystemBase {
     private SparkMax climbmotor1;
     private SparkMax climbmotor2;
     private SparkMaxConfig motorConfig;
@@ -36,7 +36,7 @@ public class Climber1 extends SubsystemBase {
     private double targetHeight = 0.0;
     private boolean usePID = false;
     
-    public Climber1() {
+    public Climber() {
         climbmotor1 = new SparkMax(51, MotorType.kBrushless);
         climbmotor2 = new SparkMax(52, MotorType.kBrushless);
         

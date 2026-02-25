@@ -21,11 +21,13 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakePivot;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Conveyer;
+import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.Climber;
 
 public class RobotContainer {
-    public final IntakePivot pivot = new IntakePivot();
-    public final Conveyer conveyer = new Conveyer();
+    
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double AngularRate = Math.PI * 2.5;
@@ -97,7 +99,14 @@ public class RobotContainer {
     public final Trigger test10 = new Trigger(() ->testPanel.getRawButton(10));
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+    public final IntakePivot intakePivot = new IntakePivot();
+    public final Climber climber = new Climber();
+    public final Elevator elevator = new Elevator();
+    public final Feeder feeder = new Feeder();
+    public final IntakePivot pivot = new IntakePivot();
+    public final Conveyer conveyer = new Conveyer();  
     
+
     public RobotContainer() {
         configureBindings();
     }
