@@ -9,8 +9,8 @@ import frc.robot.Constants.MotorTwoConstants;
 
 public class ShooterSubsys extends SubsystemBase {
 
-    private TalonFX motorOne;
-    private TalonFX motorTwo;
+    private TalonFX shooterMotor;
+    private TalonFX shootorMotorConfig;
 
     public ShooterSubsys() {
         

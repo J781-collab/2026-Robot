@@ -15,8 +15,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 public class Conveyer extends SubsystemBase {
-  private SparkMax motor;
-  private SparkMaxConfig motorConfig;
+  private SparkMax elevatorMotor;
+  private SparkMaxConfig elevatorMotorConfig;
 
   /** Creates a new Conveyer. */
   public Conveyer() {
@@ -28,12 +28,12 @@ public class Conveyer extends SubsystemBase {
   // Set current limits and config motor
   private void configureDevices() {
     try {
-      motorConfig = new SparkMaxConfig();
-      motorConfig
+      elevatorMotorConfig = new SparkMaxConfig();
+      elevatorMotorConfig
         .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(40);
 
-      motor.configure(motorConfig, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+      elevatorMotor.configure(elevatorMotorConfig, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
     } catch (Exception ex) {
       DriverStation.reportError("Failed to configure Conveyer Subsystem", ex.getStackTrace());
     }
@@ -44,7 +44,7 @@ public class Conveyer extends SubsystemBase {
    * @param speed [-1, 1] speed to set the roller to.
    */
   public void setSpeed(double speed) {
-    motor.set(speed);
+    elevatorMotor.set(speed);
   }
 
   /**
@@ -60,7 +60,7 @@ public class Conveyer extends SubsystemBase {
    * Stop the roller.
    */
   public void stop() {
-    motor.set(0);
+    elevatorMotor.set(0);
   }
 
   @Override
