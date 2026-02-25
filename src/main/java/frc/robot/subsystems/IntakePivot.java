@@ -145,7 +145,7 @@ public class IntakePivot extends SubsystemBase {
                             leaderPivotMotor.set(
                                 MathUtil.clamp(
                                     pivotController.calculate(getPivotEncoderPosition(), goalPosition),
-                                    -1.0, 1.0
+                                    -0.1, 0.1
                                 )
                             );
                         } else {
