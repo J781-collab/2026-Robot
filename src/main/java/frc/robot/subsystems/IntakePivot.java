@@ -4,137 +4,157 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Feet;
-import static edu.wpi.first.units.Units.Pounds;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import static edu.wpi.first.units.Units.Second;
-import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volts;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Seconds;
-import yams.motorcontrollers.local.SparkWrapper;
-import yams.motorcontrollers.SmartMotorController;
-import edu.wpi.first.math.controller.ArmFeedforward;
-import yams.mechanisms.config.ArmConfig;
-import yams.mechanisms.positional.Arm;
-import yams.gearing.GearBox;
-import yams.gearing.MechanismGearing;
-import yams.mechanisms.SmartMechanism;
-import yams.motorcontrollers.SmartMotorControllerConfig;
-import yams.motorcontrollers.SmartMotorControllerConfig.ControlMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
-
-import edu.wpi.first.math.system.plant.DCMotor;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-  
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
+
+import frc.robot.Constants.IntakePivotConstants;
 
 public class IntakePivot extends SubsystemBase {
 
-  private SmartMotorControllerConfig smcConfig;
-  private SparkMax spark;
-  private SmartMotorController sparkSmartMotorController;
-  private ArmConfig armCfg;
-  private Arm arm;
+    /**
+     * Pivot motor(s) pivot the intake wrist.
+     */
+    private SparkMax leaderPivotMotor;
+    private SparkMaxConfig leadMotorConfig;
 
-  /** Creates a new IntakePivot. */
-  public IntakePivot() {
-    smcConfig = new SmartMotorControllerConfig(this)
-      .withControlMode(ControlMode.CLOSED_LOOP)
-      // Feedback Constants (PID Constants)
-      .withClosedLoopController(50, 0, 0, DegreesPerSecond.of(9), DegreesPerSecondPerSecond.of(5))
-      .withSimClosedLoopController(500, 0, 0, DegreesPerSecond.of(9), DegreesPerSecondPerSecond.of(5))
-      // Feedforward Constants
-      .withFeedforward(new ArmFeedforward(0, 0, 0))
-      .withSimFeedforward(new ArmFeedforward(0, 0, 0))
-      // Telemetry name and verbosity level
-      .withTelemetry("ArmMotor", TelemetryVerbosity.HIGH)
-      // Gearing from the motor rotor to final shaft.
-      // In this example GearBox.fromReductionStages(3,4) is the same as GearBox.fromStages("3:1","4:1") which corresponds to the gearbox attached to your motor.
-      // You could also use .withGearing(12) which does the same thing.
-      .withGearing(new MechanismGearing(GearBox.fromReductionStages(3, 4)))
-      // Motor properties to prevent over currenting.
-      .withMotorInverted(false)
-      .withIdleMode(MotorMode.BRAKE)
-      .withStatorCurrentLimit(Amps.of(40))
-      .withClosedLoopRampRate(Seconds.of(0.25))
-      .withOpenLoopRampRate(Seconds.of(0.25));
+    private CANcoder pivotEncoder;
+    private CANcoderConfiguration pivotCANcoderConfig;
 
-    spark = new SparkMax(20, MotorType.kBrushless);
-    sparkSmartMotorController = new SparkWrapper(spark, DCMotor.getNEO(1), smcConfig);
-    
-    armCfg = new ArmConfig(sparkSmartMotorController)
-      // Soft limit is applied to the SmartMotorControllers PID
-      .withSoftLimits(Degrees.of(-40), Degrees.of(40))
-      // Hard limit is applied to the simulation.
-      .withHardLimit(Degrees.of(-80), Degrees.of(80))
-      // Starting position is where your arm starts
-      .withStartingPosition(Degrees.of(-5))
-      // Length and mass of your arm for sim.
-      .withLength(Feet.of(1))
-      .withMass(Pounds.of(1))
-      // Telemetry name and verbosity for the arm.
-      .withTelemetry("Arm", TelemetryVerbosity.HIGH);
+    private PIDController pivotController;
 
-    arm = new Arm(armCfg);
-    System.out.println("IntakePivot initialized successfully");
-  }
+    private double goalPosition;
 
+    public IntakePivot() {
+        // Config pivot motor
+        leaderPivotMotor = new SparkMax(IntakePivotConstants.leaderMotorID, MotorType.kBrushless);
 
-  // Arm Mechanism
-  
-  /**
-   * Set the angle of the arm, does not stop when the arm reaches the setpoint.
-   * @param angle Angle to go to.
-   * @return A command.
-   */
+        // Config pivot encoder
+        pivotEncoder = new CANcoder(IntakePivotConstants.encoderID);
 
-  public Command setAngle(Angle angle) { return arm.run(angle);}
+        // Config pivot PID
+        pivotController = new PIDController(
+            IntakePivotConstants.IntakePivotPID.P,
+            IntakePivotConstants.IntakePivotPID.I,
+            IntakePivotConstants.IntakePivotPID.D
+        );
+        pivotController.enableContinuousInput(0, 360);
 
-  /**
-   * Set the angle of the arm, ends the command but does not stop the arm when the arm reaches the setpoint.
-   * @param angle Angle to go to.
-   * @return A Command
-   */
-  public Command setAngleAndStop(Angle angle, Angle tolerance) { return arm.runTo(angle, tolerance);}
+        // Apply motor/encoder configs
+        configureDevices();
 
-  /**
-   * Set arm closed loop controller to go to the specified mechanism position.
-   * @param angle Angle to go to.
-   */
-  public void setAngleSetpoint(Angle angle) { arm.setMechanismPositionSetpoint(angle); }
+        // Set goal to current position
+        goalPosition = getPivotEncoderPosition();
+    }
 
-  /**
-   * Move the arm up and down.
-   * @param dutycycle [-1, 1] speed to set the arm too.
-   */
-  public Command set(double dutycycle) { return arm.set(dutycycle);}
+    /** Set current limits, configure motors and encoders. */
+    private void configureDevices() {
+        try {
+            // Lead pivot motor
+            leadMotorConfig = new SparkMaxConfig();
+            leadMotorConfig
+                .inverted(true)
+                .smartCurrentLimit(30)
+                .closedLoopRampRate(1)
+                .idleMode(IdleMode.kBrake);
 
-  /**
-   * Run sysId on the {@link Arm}
-   */
-  public Command sysId() { return arm.sysId(Volts.of(7), Volts.of(2).per(Second), Seconds.of(4));}
+            leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-  @Override
-public void periodic() {
-    // This method will be called once per scheduler run
-    arm.updateTelemetry();
-    SmartDashboard.putNumber("Arm Angle", arm.getMechanismSetpoint().orElse(Degrees.of(0)).in(Degrees));
-    SmartDashboard.putNumber("Mechanism Position Setpoint", arm.getMechanismSetpoint().orElse(Degrees.of(0)).in(Degrees));
-  }
+            // Pivot CANcoder
+            pivotCANcoderConfig = new CANcoderConfiguration();
+            pivotEncoder.getConfigurator().apply(
+                pivotCANcoderConfig.MagnetSensor
+                    .withAbsoluteSensorDiscontinuityPoint(1)
+                    .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
+                    .withMagnetOffset(-IntakePivotConstants.encoderOffset)
+            );
 
-public void simulationPeriodic() {
-  // This method will be called once per scheduler run during simulation
-  arm.simIterate();
-}
+        } catch (Exception ex) {
+            DriverStation.reportError("Failed to configure IntakePivot Subsystem", ex.getStackTrace());
+        }
+    }
+
+    @Override
+    public void periodic() {
+        SmartDashboard.putNumber("IntakePivot Absolute Position", pivotEncoder.getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("IntakePivot Position", getPivotEncoderPosition());
+        SmartDashboard.putNumber("IntakePivot Goal", getPivotGoal());
+        SmartDashboard.putData(this);
+    }
+
+    /** Get the position of the pivotEncoder in degrees. */
+    public double getPivotEncoderPosition() {
+        return pivotEncoder.getAbsolutePosition().getValueAsDouble() * 360;
+    }
+
+    /** Get the current pivot goal of the PID. */
+    public double getPivotGoal() {
+        return goalPosition;
+    }
+
+    /**
+     * Set the goal position of the pivot (degrees).
+     * Clamps to min/max and rejects out-of-bounds requests.
+     *
+     * @param position target angle in degrees
+     * @return a command
+     */
+    public Command setPivotGoal(double position) {
+        return Commands
+            .runOnce(
+                () -> {
+                    goalPosition = MathUtil.clamp(position, IntakePivotConstants.minPivotPos, IntakePivotConstants.maxPivotPos);
+                }, this
+            ).unless(
+                () -> (position > IntakePivotConstants.maxPivotPos) || (position < IntakePivotConstants.minPivotPos)
+            );
+    }
+
+    /**
+     * Pivot the wrist toward the goal position using PID.
+     * Ends when the position is within 0.5 degrees of the goal.
+     *
+     * @return a command
+     */
+    public Command pivotArm() {
+        return Commands
+            .runOnce(
+                () -> {
+                    leaderPivotMotor.set(0.0);
+                }, this
+            ).andThen(
+                Commands.run(
+                    () -> {
+                        if (getPivotEncoderPosition() > IntakePivotConstants.minPivotPos) {
+                            leaderPivotMotor.set(
+                                MathUtil.clamp(
+                                    pivotController.calculate(getPivotEncoderPosition(), goalPosition),
+                                    -0.1, 0.1
+                                )
+                            );
+                        } else {
+                            leaderPivotMotor.set(0.0);
+                        }
+                    }, this
+                ).until(
+                    () -> Math.abs(getPivotEncoderPosition() - goalPosition) < 0.5
+                ).withInterruptBehavior(InterruptionBehavior.kCancelSelf)
+            );
+    }
 }

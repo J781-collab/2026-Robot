@@ -122,10 +122,10 @@ public class RobotContainer {
                         .withRotationalRate( ((driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
                     )
         );
-        // Schedule `setAngle` when the Xbox controller's B button is pressed,
+        // Schedule `setPivotGoal` + `pivotArm` when the Xbox controller's X button is pressed,
         // cancelling on release.
-        driverX.whileTrue(pivot.setAngle(Degrees.of(0)));
-        driverY.whileTrue(pivot.setAngle(Degrees.of(15)));
+        driverX.whileTrue(pivot.setPivotGoal(0).andThen(pivot.pivotArm()));
+        driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
         driverRT.whileTrue(pivot.set(0.3));
