@@ -25,6 +25,7 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Conveyer;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Climber;
+import frc.robot.subsystems.Shooter;
 
 public class RobotContainer {
     
@@ -103,6 +104,7 @@ public class RobotContainer {
     public final Climber climber = new Climber();
     public final Elevator elevator = new Elevator();
     public final Feeder feeder = new Feeder();
+    public final Shooter shooter = new Shooter();
     public final IntakePivot pivot = new IntakePivot();
     public final Conveyer conveyer = new Conveyer();  
     
@@ -128,9 +130,14 @@ public class RobotContainer {
         driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverRT.whileTrue(pivot.set(0.3));
         driverLT.whileTrue(conveyer.setSpeedCommand(0.5));
         driverLB.whileTrue(conveyer.setSpeedCommand(-0.5));
+
+        // Shooter — hold RT to spin up with velocity PID, release to stop
+        driverRT.whileTrue(shooter.setVelocityCommand(50.0));
+        // Shooter duty cycle on op panel button 1
+        op1.whileTrue(shooter.setDutyCycleCommand(0.75));
+
         driverRB.whileTrue(getAutonomousCommand());
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
