@@ -14,13 +14,13 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-public class Conveyer extends SubsystemBase {
+public class Elevator extends SubsystemBase {
   private SparkMax elevatorMotor;
   private SparkMaxConfig elevatorMotorConfig;
 
-  /** Creates a new Conveyer. */
-  public Conveyer() {
-    motor = new SparkMax(21, MotorType.kBrushless);
+  /** Creates a new Elevator. */
+  public Elevator() {
+    elevatorMotor = new SparkMax(21, MotorType.kBrushless);
     
     configureDevices();
   }
