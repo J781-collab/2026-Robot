@@ -100,12 +100,11 @@ public class RobotContainer {
     public final Trigger test10 = new Trigger(() ->testPanel.getRawButton(10));
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final IntakePivot intakePivot = new IntakePivot();
+    public final IntakePivot pivot = new IntakePivot();
     public final Climber climber = new Climber();
     public final Elevator elevator = new Elevator();
     public final Feeder feeder = new Feeder();
     public final Shooter shooter = new Shooter();
-    public final IntakePivot pivot = new IntakePivot();
     public final Conveyer conveyer = new Conveyer();  
     
 
@@ -160,8 +159,8 @@ public class RobotContainer {
         test5.and(test6).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         test7.and(test8).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        // Reset the field-centric heading on left bumper press.
-        driverRB.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        // Reset the field-centric heading on start button press.
+        driverStart.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }

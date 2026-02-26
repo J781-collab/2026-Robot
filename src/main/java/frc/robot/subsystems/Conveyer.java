@@ -20,7 +20,7 @@ public class Conveyer extends SubsystemBase {
 
   /** Creates a new Conveyer. */
   public Conveyer() {
-    motor = new SparkMax(21, MotorType.kBrushless);
+    motor = new SparkMax(23, MotorType.kBrushless);
     
     configureDevices();
   }

@@ -17,7 +17,7 @@ public class Feeder extends SubsystemBase {
 
   /** Creates a new Feeder. */
   public Feeder() {
-    feederMotor = new SparkMax(22, MotorType.kBrushless);
+    feederMotor = new SparkMax(24, MotorType.kBrushless);
     
     configureDevices();
   }
@@ -28,7 +28,7 @@ public class Feeder extends SubsystemBase {
       feederMotorConfig = new SparkMaxConfig();
       feederMotorConfig
         .idleMode(IdleMode.kCoast)
-        .smartCurrentLimit(-40);
+        .smartCurrentLimit(40);
 
       feederMotor.configure(feederMotorConfig, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
     } catch (Exception ex) {

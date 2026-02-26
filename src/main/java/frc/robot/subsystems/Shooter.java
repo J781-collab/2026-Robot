@@ -28,8 +28,8 @@ public class Shooter extends SubsystemBase {
     private static final double kV = 0.12; // Velocity feedforward (volts per RPS)
 
     public Shooter() {
-        shooterMotor1 = new TalonFX(21);
-        shooterMotor2 = new TalonFX(22);
+        shooterMotor1 = new TalonFX(41);
+        shooterMotor2 = new TalonFX(42);
 
         configureMotors();
     }
