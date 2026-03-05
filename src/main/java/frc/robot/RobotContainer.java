@@ -26,7 +26,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
-import frc.robot.Constants.IntakePivotConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakePivot;
@@ -138,30 +137,15 @@ public class RobotContainer {
     
 
     public RobotContainer() {
-        NamedCommands.registerCommand("lowerIntake",
-            pivot.setPivotGoal(IntakePivotConstants.intakePosition).andThen(pivot.pivotArm()));
-        NamedCommands.registerCommand("intakeRollers",intakeRollers.setSpeedCommand());
-        NamedCommands.registerCommand("shootSequence",
-            Commands.parallel(
-                // Shooter runs the entire time
-                shooter.setVelocityCommand(50),
-                // Wait for shooter to reach speed, then feed with conveyor + elevator
-                Commands.sequence(
-                    Commands.waitUntil(() -> shooter.atTargetVelocity(50, 2)),
-                    Commands.parallel(
-                        conveyer.setSpeedCommand(1.0),
-                        elevator.setSpeedCommand(1.0)
-                    )
-                )
-            )
-        );
-        NamedCommands.registerCommand("feeder", feeder.setSpeedCommand());
-        NamedCommands.registerCommand("climb", climber.setSpeedCommand());
-        NamedCommands.registerCommand("elevator", elevator.setSpeedCommand());
-        ")
-        );
         configureBindings();
+    /*public void configureNamedCommands(){
+        NamedCommands.registerCommand(name:"",
+            new ParallelDeadlineGroup(getAutonomousCommand(), null)
     }
+        m_chooser.addOption(name:"driveforward+shoot", object:"driveforward+shoot");
+        NamedCommands.registerCommand(name:"",new:"" );*/
+    }
+
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
