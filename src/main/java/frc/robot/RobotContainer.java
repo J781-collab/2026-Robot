@@ -175,10 +175,6 @@ public class RobotContainer {
         driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-<<<<<<< Updated upstream
-=======
-        driverRT.whileTrue(pivot.setPivotGoal(30).andThen(pivot.pivotArm()));
->>>>>>> Stashed changes
         driverLT.whileTrue(conveyer.setSpeedCommand(0.5));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
         driverLB.onTrue(pivot.setPivotGoal(90).andThen(pivot.pivotArm()));
