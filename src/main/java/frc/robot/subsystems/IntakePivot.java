@@ -159,4 +159,16 @@ public class IntakePivot extends SubsystemBase {
                 ).withInterruptBehavior(InterruptionBehavior.kCancelSelf)
             );
     }
+
+    /**
+     * Run the pivot motor at a given duty cycle (open-loop).
+     *
+     * @param dutyCycle [-1, 1] speed to set the motor to
+     * @return a command
+     */
+    public Command set(double dutyCycle) {
+        return Commands.run(
+            () -> leaderPivotMotor.set(dutyCycle), this
+        );
+    }
 }
