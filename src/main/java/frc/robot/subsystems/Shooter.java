@@ -1,15 +1,23 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.*;
+
+import java.util.function.DoubleSupplier;
+
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Shooter extends SubsystemBase {
 
@@ -19,6 +27,10 @@ public class Shooter extends SubsystemBase {
     // Control requests (reused to avoid garbage collection)
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0);
+    private final VoltageOut sysIdControl = new VoltageOut(0);
+
+    // SysId routine — initialized in constructor after motors exist
+    private final SysIdRoutine sysIdRoutine;
 
     // PID gains for velocity control — tune these!
     private static final double kP = 0.1;
@@ -30,6 +42,23 @@ public class Shooter extends SubsystemBase {
     public Shooter() {
         shooterMotor1 = new TalonFX(41);
         shooterMotor2 = new TalonFX(42);
+
+        sysIdRoutine = new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,        // Default ramp rate (1 V/s)
+                Volts.of(4), // Step voltage — 4V to prevent brownout
+                null,        // Default timeout (10s)
+                state -> SignalLogger.writeString("ShooterSysId_State", state.toString())
+            ),
+            new SysIdRoutine.Mechanism(
+                voltage -> {
+                    shooterMotor1.setControl(sysIdControl.withOutput(voltage.in(Volts)));
+                    shooterMotor2.setControl(sysIdControl.withOutput(voltage.in(Volts)));
+                },
+                null,
+                this
+            )
+        );
 
         configureMotors();
     }
@@ -54,6 +83,18 @@ public class Shooter extends SubsystemBase {
 
         shooterMotor1.getConfigurator().apply(config);
         shooterMotor2.getConfigurator().apply(config);
+    }
+
+    // ---- SysId Commands ---- //
+
+    /** SysId quasistatic test command. */
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return sysIdRoutine.quasistatic(direction);
+    }
+
+    /** SysId dynamic test command. */
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return sysIdRoutine.dynamic(direction);
     }
 
     // ---- Velocity PID Control ---- //
@@ -132,9 +173,50 @@ public class Shooter extends SubsystemBase {
         shooterMotor2.setControl(dutyCycleRequest.withOutput(0));
     }
 
+    // ---- Distance-Based Interpolation ---- //
+
+    /**
+     * Interpolation table: distance (meters) → shooter velocity (RPS).
+     * Fill in real data from testing! These are placeholder values.
+     */
+    private static final InterpolatingDoubleTreeMap shooterSpeedMap = new InterpolatingDoubleTreeMap();
+    static {
+        shooterSpeedMap.put(1.0,  30.0);   // 1m   → 30 RPS
+        shooterSpeedMap.put(1.5,  35.0);   // 1.5m → 35 RPS
+        shooterSpeedMap.put(2.0,  40.0);   // 2m   → 40 RPS
+        shooterSpeedMap.put(2.5,  45.0);   // 2.5m → 45 RPS
+        shooterSpeedMap.put(3.0,  50.0);   // 3m   → 50 RPS
+        shooterSpeedMap.put(3.5,  55.0);   // 3.5m → 55 RPS
+        shooterSpeedMap.put(4.0,  60.0);   // 4m   → 60 RPS
+        shooterSpeedMap.put(4.5,  65.0);   // 4.5m → 65 RPS
+        shooterSpeedMap.put(5.0,  70.0);   // 5m   → 70 RPS
+        shooterSpeedMap.put(6.0,  80.0);   // 6m   → 80 RPS
+    }
+
+    /**
+     * Gets the interpolated shooter speed (RPS) for a given distance (meters).
+     * Uses WPILib's InterpolatingDoubleTreeMap for automatic linear interpolation.
+     * @param distanceMeters Distance to target in meters.
+     * @return Interpolated shooter velocity in RPS.
+     */
+    public static double getInterpolatedSpeed(double distanceMeters) {
+        return shooterSpeedMap.get(distanceMeters);
+    }
+
+    /**
+     * Runs the shooter at a velocity supplied dynamically each loop.
+     * Use this with a distance supplier for live interpolation.
+     * @param velocitySupplier Supplies the target velocity in RPS each cycle.
+     * @return A command that continuously sets velocity and stops when finished.
+     */
+    public Command setVelocityDynamicCommand(DoubleSupplier velocitySupplier) {
+        return this.run(() -> setVelocity(velocitySupplier.getAsDouble())).finallyDo(() -> stop());
+    }
+
     @Override
     public void periodic() {
         SmartDashboard.putNumber("Shooter Motor1 RPS", getMotor1VelocityRPS());
         SmartDashboard.putNumber("Shooter Motor2 RPS", getMotor2VelocityRPS());
-    }
+ 
+       }  
 }

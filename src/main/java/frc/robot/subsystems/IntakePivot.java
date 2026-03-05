@@ -25,6 +25,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 
 import frc.robot.Constants.IntakePivotConstants;
+import edu.wpi.first.wpilibj.XboxController;
 
 public class IntakePivot extends SubsystemBase {
 
@@ -59,8 +60,8 @@ public class IntakePivot extends SubsystemBase {
         // Apply motor/encoder configs
         configureDevices();
 
-        // Set goal to current position
-        goalPosition = getPivotEncoderPosition();
+        // Set goal to idle position (-45 degrees)
+        goalPosition = IntakePivotConstants.idlePosition;
     }
 
     /** Set current limits, configure motors and encoders. */
@@ -70,7 +71,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig = new SparkMaxConfig();
             leadMotorConfig
                 .inverted(true)
-                .smartCurrentLimit(30)
+                .smartCurrentLimit(40)
                 .closedLoopRampRate(1)
                 .idleMode(IdleMode.kBrake);
 
@@ -141,10 +142,11 @@ public class IntakePivot extends SubsystemBase {
             ).andThen(
                 Commands.run(
                     () -> {
-                        if (getPivotEncoderPosition() > IntakePivotConstants.minPivotPos) {
+                        double pos = getPivotEncoderPosition();
+                        if (pos > IntakePivotConstants.minPivotPos && pos < IntakePivotConstants.maxPivotPos) {
                             leaderPivotMotor.set(
                                 MathUtil.clamp(
-                                    pivotController.calculate(getPivotEncoderPosition(), goalPosition),
+                                    pivotController.calculate(pos, goalPosition),
                                     -0.1, 0.1
                                 )
                             );

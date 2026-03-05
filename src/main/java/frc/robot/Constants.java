@@ -102,13 +102,13 @@ public class Constants {
             public static double D = 0.0009;
         }
 
-        // Encoder reading * 360 = degrees
-        public static double maxPivotPos = 96;
-        public static double minPivotPos = -0.1;
+        // Soft limits (degrees)
+        public static double maxPivotPos = 100;
+        public static double minPivotPos = -60;
 
         // Preset positions (degrees)
-        public static double idlePosition = 0.0;
-        public static double intakePosition = 15.0;
+        public static double idlePosition = -45.0;
+        public static double intakePosition = 90.0;
 
         public static int encoderID = 35;
         public static double encoderOffset = 0.0;

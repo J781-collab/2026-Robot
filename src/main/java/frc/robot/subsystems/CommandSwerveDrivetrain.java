@@ -411,4 +411,32 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .unaryMinus()
             .getAngle();
     }
+
+    /**
+     * Gets the relative rotation from the robot to the midpoint between two AprilTags.
+     * @param tagID1 The ID of the first AprilTag
+     * @param tagID2 The ID of the second AprilTag
+     * @return Rotation2d pointing toward the midpoint of the two tags
+     */
+    public Rotation2d getRotationRelativeMidpoint(int tagID1, int tagID2) {
+        Translation2d midpoint = getTagPose(tagID1).getTranslation()
+            .plus(getTagPose(tagID2).getTranslation())
+            .div(2.0);
+        return midpoint
+            .minus(getPose().getTranslation())
+            .getAngle();
+    }
+
+    /**
+     * Gets the distance in meters from the robot to the midpoint between two AprilTags.
+     * @param tagID1 The ID of the first AprilTag
+     * @param tagID2 The ID of the second AprilTag
+     * @return Distance in meters
+     */
+    public double getDistanceToMidpoint(int tagID1, int tagID2) {
+        Translation2d midpoint = getTagPose(tagID1).getTranslation()
+            .plus(getTagPose(tagID2).getTranslation())
+            .div(2.0);
+        return getPose().getTranslation().getDistance(midpoint);
+    }
 }
