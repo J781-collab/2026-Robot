@@ -17,7 +17,13 @@
               {
                 "type": "named",
                 "data": {
-                  "name": null
+                  "name": "lowerIntake"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intakeRollers"
                 }
               }
             ]
@@ -32,7 +38,19 @@
         {
           "type": "named",
           "data": {
-            "name": null
+            "name": "shootSequence"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RightToClimb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
           }
         }
       ]

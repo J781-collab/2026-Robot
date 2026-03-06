@@ -17,7 +17,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": null
+                  "name": "intakeRollers"
                 }
               }
             ]
@@ -32,7 +32,19 @@
         {
           "type": "named",
           "data": {
-            "name": null
+            "name": "shootSequence"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftToClimb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
           }
         }
       ]
