@@ -87,12 +87,12 @@ public class Shooter extends SubsystemBase {
 
     // ---- SysId Commands ---- //
 
-    /** SysId quasistatic test command. */
+    /** Returns a command that will execute a quasistatic test in the given direction. */
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
         return sysIdRoutine.quasistatic(direction);
     }
 
-    /** SysId dynamic test command. */
+    /** Returns a command that will execute a dynamic test in the given direction. */
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return sysIdRoutine.dynamic(direction);
     }

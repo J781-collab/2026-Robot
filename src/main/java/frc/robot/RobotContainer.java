@@ -27,6 +27,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import frc.robot.Constants.IntakePivotConstants;
+import frc.robot.Constants.ShootingConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakePivot;
@@ -176,17 +177,33 @@ public class RobotContainer {
         // cancelling on release.
         // Hold X to drive while auto-aiming rotation toward the midpoint between two AprilTags
         // Red alliance: aim between tags 9 & 10, Blue alliance: aim between tags 25 & 26
+        // Uses aim compensation if enabled, otherwise plain aim
         driverX.whileTrue(
             drivetrain.applyRequest(() -> {
                 boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
                 int tag1 = isRed ? 9 : 25;
                 int tag2 = isRed ? 10 : 26;
+                Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
+                    ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
+                    : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
                 return driveAimAtTag
                     .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
                     .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                    .withTargetDirection(drivetrain.getRotationRelativeMidpoint(tag1, tag2));
+                    .withTargetDirection(aimAngle);
             })
         );
+        // OLD driverX (no aim compensation):
+        // driverX.whileTrue(
+        //     drivetrain.applyRequest(() -> {
+        //         boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+        //         int tag1 = isRed ? 9 : 25;
+        //         int tag2 = isRed ? 10 : 26;
+        //         return driveAimAtTag
+        //             .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+        //             .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+        //             .withTargetDirection(drivetrain.getRotationRelativeMidpoint(tag1, tag2));
+        //     })
+        // );
         driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
@@ -201,8 +218,9 @@ public class RobotContainer {
         // Shooter duty cycle on op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
 
-        // Hold RB to shoot: spin up shooter with interpolated speed based on distance,
-        // then run elevator + conveyer to feed balls into shooter
+        // Hold RB to shoot: auto-aim + spin up shooter + feed when ready
+        // Option 1 (fallback): limits drive speed while shooting
+        // Option 2: uses aim compensation for accurate shots while driving
         driverRB.whileTrue(
             getShootCommand()
         );
@@ -275,14 +293,42 @@ public class RobotContainer {
 
     /**
      * Creates a command that:
-     * 1. Spins up the shooter to an interpolated speed based on distance
-     * 2. Waits for the shooter to reach target velocity
-     * 3. Then runs the elevator and conveyer to feed balls into the shooter
+     * 1. Auto-aims at the alliance target (with velocity compensation if enabled)
+     * 2. Spins up the shooter to an interpolated speed based on distance
+     * 3. Waits for the shooter to reach target velocity
+     * 4. Then runs the elevator and conveyer to feed balls into the shooter
+     * 
+     * If ENABLE_AIM_COMPENSATION is false (option 1 fallback):
+     *   - Drive speed is limited by SHOOT_SPEED_MULTIPLIER while shooting
+     *   - Aim uses plain rotation toward target
+     * If ENABLE_AIM_COMPENSATION is true (option 2):
+     *   - Full drive speed allowed
+     *   - Aim leads the target based on robot velocity
      * 
      * Everything stops when the button is released.
      */
     public Command getShootCommand() {
         return Commands.parallel(
+            // Auto-aim while shooting — uses drivetrain subsystem
+            drivetrain.applyRequest(() -> {
+                boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+                int tag1 = isRed ? 9 : 25;
+                int tag2 = isRed ? 10 : 26;
+
+                Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
+                    ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
+                    : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+
+                // Option 1 fallback: limit speed. Option 2: full speed.
+                double speedScale = ShootingConstants.ENABLE_AIM_COMPENSATION
+                    ? 1.0
+                    : ShootingConstants.SHOOT_SPEED_MULTIPLIER;
+
+                return driveAimAtTag
+                    .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * speedScale)
+                    .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * speedScale)
+                    .withTargetDirection(aimAngle);
+            }),
             // Shooter spins up and stays running the whole time
             shooter.setVelocityDynamicCommand(() -> Shooter.getInterpolatedSpeed(getDistanceToTarget())),
             // Wait for shooter to reach speed, then feed
@@ -296,4 +342,21 @@ public class RobotContainer {
             )
         );
     }
+
+    // OLD getShootCommand (no auto-aim, no speed limiting):
+    // public Command getShootCommand() {
+    //     return Commands.parallel(
+    //         // Shooter spins up and stays running the whole time
+    //         shooter.setVelocityDynamicCommand(() -> Shooter.getInterpolatedSpeed(getDistanceToTarget())),
+    //         // Wait for shooter to reach speed, then feed
+    //         Commands.sequence(
+    //             Commands.waitUntil(() -> shooter.atTargetVelocity(
+    //                 Shooter.getInterpolatedSpeed(getDistanceToTarget()), 3.0)),
+    //             Commands.parallel(
+    //                 elevator.setSpeedCommand(0.5),
+    //                 conveyer.setSpeedCommand(0.5)
+    //             )
+    //         )
+    //     );
+    // }
 }

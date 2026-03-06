@@ -7,6 +7,16 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 public class Constants {
     
+    public final static class ShootingConstants {
+        /** Set to true for aim compensation (option 2), false for simple speed limiting (option 1). */
+        public static boolean ENABLE_AIM_COMPENSATION = false;
+
+        /** Drive speed multiplier while shooting (option 1 fallback). 0.3 = 30% speed. */
+        public static double SHOOT_SPEED_MULTIPLIER = 0.3;
+
+        /** Estimated ball exit speed in meters per second. Measure empirically! */
+        public static double BALL_EXIT_SPEED_MPS = 15.0;
+    }
 
 
     public final static class VisionConstants {

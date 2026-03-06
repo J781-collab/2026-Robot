@@ -16,6 +16,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -438,5 +439,54 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .plus(getTagPose(tagID2).getTranslation())
             .div(2.0);
         return getPose().getTranslation().getDistance(midpoint);
+    }
+
+    /**
+     * Gets the current field-relative chassis speeds.
+     * @return ChassisSpeeds with vx, vy in m/s and omega in rad/s
+     */
+    public ChassisSpeeds getFieldRelativeVelocity() {
+        return getState().Speeds;
+    }
+
+    /**
+     * Computes an aim-compensated rotation toward the midpoint of two AprilTags,
+     * accounting for robot velocity so the ball lands on target while driving.
+     * 
+     * The compensation works by computing where the robot will be when the ball 
+     * arrives at the target (based on time-of-flight), then aiming at the target
+     * from that predicted position instead of the current position.
+     * 
+     * @param tagID1 First AprilTag ID
+     * @param tagID2 Second AprilTag ID
+     * @param ballExitSpeedMps Estimated ball exit speed in m/s
+     * @return Rotation2d with velocity compensation applied
+     */
+    public Rotation2d getAimCompensatedRotation(int tagID1, int tagID2, double ballExitSpeedMps) {
+        // Target = midpoint between two tags
+        Translation2d target = getTagPose(tagID1).getTranslation()
+            .plus(getTagPose(tagID2).getTranslation())
+            .div(2.0);
+
+        Translation2d robotPos = getPose().getTranslation();
+        double distance = robotPos.getDistance(target);
+
+        // Time of flight = distance / ball speed
+        double tof = distance / ballExitSpeedMps;
+
+        // Predict where the ball will be offset by robot velocity * time-of-flight
+        // We subtract the offset from the target so we aim "ahead"
+        ChassisSpeeds speeds = getFieldRelativeVelocity();
+        Translation2d velocityOffset = new Translation2d(
+            speeds.vxMetersPerSecond * tof,
+            speeds.vyMetersPerSecond * tof
+        );
+
+        // Aim at: target minus the velocity offset (i.e. lead the shot)
+        Translation2d compensatedTarget = target.minus(velocityOffset);
+
+        return compensatedTarget
+            .minus(robotPos)
+            .getAngle();
     }
 }
