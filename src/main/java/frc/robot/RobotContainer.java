@@ -140,7 +140,7 @@ public class RobotContainer {
     public RobotContainer() {
         NamedCommands.registerCommand("lowerIntake",
             pivot.setPivotGoal(IntakePivotConstants.intakePosition).andThen(pivot.pivotArm()));
-        NamedCommands.registerCommand("intakeRollers",intakeRollers.setSpeedCommand());
+        NamedCommands.registerCommand("intakeRollers",intakeRollers.setSpeedCommand(1.0));
         NamedCommands.registerCommand("shootSequence",
             Commands.parallel(
                 // Shooter runs the entire time
@@ -155,11 +155,10 @@ public class RobotContainer {
                 )
             )
         );
-        NamedCommands.registerCommand("feeder", feeder.setSpeedCommand());
-        NamedCommands.registerCommand("climb", climber.setSpeedCommand());
-        NamedCommands.registerCommand("elevator", elevator.setSpeedCommand());
-        ")
-        );
+        NamedCommands.registerCommand("feeder", feeder.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("elevator", elevator.setSpeedCommand(1.0));
+        
         configureBindings();
     }
     private void configureBindings() {
