@@ -128,7 +128,7 @@ public class RobotContainer {
     public final Trigger test23 = new Trigger(() ->testPanel.getRawButton(23));
     public final Trigger test24 = new Trigger(() ->testPanel.getRawButton(24));
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+    public final CommandSwerveDrivetrain drivetrain;
     public final IntakePivot pivot = new IntakePivot();
     public final Climber climber = new Climber();
     public final Elevator elevator = new Elevator();
@@ -139,9 +139,12 @@ public class RobotContainer {
     
 
     public RobotContainer() {
+        // Register named commands BEFORE creating drivetrain (which calls AutoBuilder.configure)
         NamedCommands.registerCommand("lowerIntake",
             pivot.setPivotGoal(IntakePivotConstants.intakePosition).andThen(pivot.pivotArm()));
-        NamedCommands.registerCommand("intakeRollers",intakeRollers.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("raiseIntake",
+            pivot.setPivotGoal(IntakePivotConstants.idlePosition).andThen(pivot.pivotArm()));
+        NamedCommands.registerCommand("intakeRollers", intakeRollers.setSpeedCommand(1.0));
         NamedCommands.registerCommand("shootSequence",
             Commands.parallel(
                 // Shooter runs the entire time
@@ -157,8 +160,11 @@ public class RobotContainer {
             )
         );
         NamedCommands.registerCommand("feeder", feeder.setSpeedCommand(1.0));
-        NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
         NamedCommands.registerCommand("elevator", elevator.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
+
+        // Create drivetrain AFTER named commands are registered
+        drivetrain = TunerConstants.createDrivetrain();
         
         configureBindings();
     }
