@@ -1,0 +1,67 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RigthToMidfield"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "lowerIntake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeRollers"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RightMidfeldToShoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeRollers"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RightRotateToShoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shootSequence"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RightClimb2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
