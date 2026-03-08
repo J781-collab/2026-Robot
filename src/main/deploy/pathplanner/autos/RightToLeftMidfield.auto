@@ -5,28 +5,27 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Depo"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intakeRollers"
-                }
-              }
-            ]
+            "pathName": "RigthToMidfield"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "lowerIntake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeRollers"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "DepoToShoot"
+            "pathName": "LeftMidfieldToShoot2"
           }
         },
         {
@@ -38,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LeftToClimb"
+            "pathName": "2ndleftToClimb"
           }
         },
         {
