@@ -9,11 +9,13 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -56,6 +58,11 @@ public class RobotContainer {
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     private final SendableChooser<String>m_chooser = new SendableChooser<>();
+    
+    // Adjustable shooter duty cycle (op17 = increase, op19 = decrease by 5%)
+    private double shooterDutyCycle = 0.0;
+    // Adjustable shooter velocity PID (op18 = increase, op20 = decrease by 5 RPS)
+    private double shooterTargetRPS = 0.0;
     
    // private final CommandXboxController joystick = new CommandXboxController(0);
     public Joystick driverController = new Joystick(0);
@@ -236,6 +243,37 @@ public class RobotContainer {
         op14.whileTrue(conveyer.setSpeedCommand(-1));
         op15.whileTrue(elevator.setSpeedCommand(1));
         op16.whileTrue(elevator.setSpeedCommand(-1));
+
+        // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
+        op17.onTrue(Commands.runOnce(() -> {
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle + 0.05, 0.0, 1.0);
+            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
+            shooter.setDutyCycle(shooterDutyCycle);
+        }, shooter));
+        op19.onTrue(Commands.runOnce(() -> {
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.05, 0.0, 1.0);
+            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
+            shooter.setDutyCycle(shooterDutyCycle);
+        }, shooter));
+        // Adjustable shooter velocity PID: op18 = +5 RPS and run, op20 = -5 RPS and run
+        op18.onTrue(Commands.runOnce(() -> {
+            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS + 5.0, 0.0, 100.0);
+            SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
+            shooter.setVelocity(shooterTargetRPS);
+        }, shooter));
+        op20.onTrue(Commands.runOnce(() -> {
+            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS - 5.0, 0.0, 100.0);
+            SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
+            shooter.setVelocity(shooterTargetRPS);
+        }, shooter));
+        // op21 = stop shooter and reset both duty cycle and velocity targets
+        op21.onTrue(Commands.runOnce(() -> {
+            shooterDutyCycle = 0.0;
+            shooterTargetRPS = 0.0;
+            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
+            SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
+            shooter.stop();
+        }, shooter));
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();

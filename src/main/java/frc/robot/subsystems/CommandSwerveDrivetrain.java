@@ -59,8 +59,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    /* Limelight vision */
-    private Vision kLimelight = new Vision("limelight", this);
+    /* Limelight vision — two cameras with fallback */
+    private Vision kLimelight1 = new Vision("limelight-one");
+    private Vision kLimelight2 = new Vision("limelight-two");
 
     /* AprilTag field layout */
     private AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -293,21 +294,44 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-        /* Limelight vision integration */
-        SmartDashboard.putBoolean("Limelight TV", kLimelight.getTV());
-        if (kLimelight.getTV()) {
+        /* Limelight vision integration — two cameras with fallback */
+        SmartDashboard.putBoolean("Limelight 1 TV", kLimelight1.getTV());
+        SmartDashboard.putBoolean("Limelight 2 TV", kLimelight2.getTV());
+        if (kLimelight1.getTV()) {
             addVisionMeasurement(
-                kLimelight.getEstimatedRoboPose(),
-                Utils.fpgaToCurrentTime(kLimelight.getTimestamp()),
-                kLimelight.getStandardDeviations()
+                kLimelight1.getEstimatedRoboPose(),
+                Utils.fpgaToCurrentTime(kLimelight1.getTimestamp()),
+                kLimelight1.getStandardDeviations()
+            );
+        } else if (kLimelight2.getTV()) {
+            addVisionMeasurement(
+                kLimelight2.getEstimatedRoboPose(),
+                Utils.fpgaToCurrentTime(kLimelight2.getTimestamp()),
+                kLimelight2.getStandardDeviations()
             );
         }
 
+        /* Limelight camera feeds — add these as "CameraServer" streams in SmartDashboard/Shuffleboard */
+        try {
+            SmartDashboard.putString("Limelight 1 Stream",
+                "http://" + kLimelight1.getDeviceName() + ".local:5800/stream.mjpg");
+            SmartDashboard.putString("Limelight 2 Stream",
+                "http://" + kLimelight2.getDeviceName() + ".local:5800/stream.mjpg");
+        } catch (Exception ex) {
+            DriverStation.reportError("Failed to publish Limelight streams", ex.getStackTrace());
+        }
+
+        /* 3D Robot Pose from odometry */
+        SmartDashboard.putNumber("Robot Pose X (m)", getState().Pose.getX());
+        SmartDashboard.putNumber("Robot Pose Y (m)", getState().Pose.getY());
+        SmartDashboard.putNumber("Robot Pose Heading (deg)", getState().Pose.getRotation().getDegrees());
+
+        /* Robot velocity */
+        SmartDashboard.putNumber("Robot Velocity X (m/s)", getState().Speeds.vxMetersPerSecond);
+        SmartDashboard.putNumber("Robot Velocity Y (m/s)", getState().Speeds.vyMetersPerSecond);
+
         SmartDashboard.putData("field2d", this.field);
         this.field.setRobotPose(getState().Pose);
-
-        SmartDashboard.putNumber("D_Front/Back Distance", getState().Pose.getX());
-        SmartDashboard.putNumber("D_Front/Back Velocity", getState().Speeds.vxMetersPerSecond);
     }
 
     private void startSimThread() {

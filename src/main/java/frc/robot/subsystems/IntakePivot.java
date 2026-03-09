@@ -72,7 +72,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig
                 .inverted(true)
                 .smartCurrentLimit(40)
-                .closedLoopRampRate(1)
+                .openLoopRampRate(1)
                 .idleMode(IdleMode.kBrake);
 
             leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

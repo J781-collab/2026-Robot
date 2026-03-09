@@ -70,7 +70,7 @@ public class Shooter extends SubsystemBase {
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         // Current limits
-        config.CurrentLimits.SupplyCurrentLimit = 40;
+        config.CurrentLimits.SupplyCurrentLimit = 60;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
         // Velocity PID gains in Slot 0
@@ -148,6 +148,15 @@ public class Shooter extends SubsystemBase {
         return this.run(() -> setDutyCycle(speed)).finallyDo(() -> stop());
     }
 
+    /**
+     * Runs the shooter at a duty cycle supplied dynamically each loop.
+     * @param speedSupplier Supplies the duty cycle [-1, 1] each cycle.
+     * @return A command that continuously sets duty cycle and stops when finished.
+     */
+    public Command setDutyCycleDynamicCommand(DoubleSupplier speedSupplier) {
+        return this.run(() -> setDutyCycle(speedSupplier.getAsDouble())).finallyDo(() -> stop());
+    }
+
     // ---- Getters ---- //
 
     /** Get motor 1 velocity in rotations per second. */
@@ -217,6 +226,7 @@ public class Shooter extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("Shooter Motor1 RPS", getMotor1VelocityRPS());
         SmartDashboard.putNumber("Shooter Motor2 RPS", getMotor2VelocityRPS());
- 
-       }  
+        SmartDashboard.putNumber("Shooter Motor1 Duty Cycle", shooterMotor1.getDutyCycle().getValueAsDouble());
+        SmartDashboard.putNumber("Shooter Motor2 Duty Cycle", shooterMotor2.getDutyCycle().getValueAsDouble());
+    }  
 }
