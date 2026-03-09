@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.HootAutoReplay;
 
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -21,6 +22,16 @@ public class Robot extends TimedRobot {
         .withJoystickReplay();
 
     public Robot() {
+        // Port forward Limelight web interfaces through roboRIO
+        // Limelight 0 (172.29.0.1)
+        for (int port = 5800; port <= 5809; port++) {
+            PortForwarder.add(port, "172.29.0.1", port);
+        }
+        // Limelight 1 (172.29.1.1)
+        for (int port = 5810; port <= 5819; port++) {
+            PortForwarder.add(port, "172.29.1.1", port - 10);
+        }
+
         m_robotContainer = new RobotContainer();
     }
 
