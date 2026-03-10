@@ -59,8 +59,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private boolean m_hasAppliedOperatorPerspective = false;
 
     /* Limelight vision — two cameras with fallback */
-    private Vision kLimelight1 = new Vision("limelight-one");
-    private Vision kLimelight2 = new Vision("limelight-two");
+    private Vision kLimelight1 = new Vision("llone");
+    private Vision kLimelight2 = new Vision("lltwo");
 
     /* AprilTag field layout */
     private AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);

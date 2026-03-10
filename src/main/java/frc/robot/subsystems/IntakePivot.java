@@ -4,10 +4,7 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
-
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -25,7 +22,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 
 import frc.robot.Constants.IntakePivotConstants;
-import edu.wpi.first.wpilibj.XboxController;
 
 public class IntakePivot extends SubsystemBase {
 
@@ -35,8 +31,7 @@ public class IntakePivot extends SubsystemBase {
     private SparkMax leaderPivotMotor;
     private SparkMaxConfig leadMotorConfig;
 
-    private CANcoder pivotEncoder;
-    private CANcoderConfiguration pivotCANcoderConfig;
+    private RelativeEncoder pivotEncoder;
 
     private PIDController pivotController;
 
@@ -46,8 +41,8 @@ public class IntakePivot extends SubsystemBase {
         // Config pivot motor
         leaderPivotMotor = new SparkMax(IntakePivotConstants.leaderMotorID, MotorType.kBrushless);
 
-        // Config pivot encoder
-        pivotEncoder = new CANcoder(IntakePivotConstants.encoderID);
+        // Get built-in NEO encoder
+        pivotEncoder = leaderPivotMotor.getEncoder();
 
         // Config pivot PID
         pivotController = new PIDController(
@@ -59,6 +54,9 @@ public class IntakePivot extends SubsystemBase {
 
         // Apply motor/encoder configs
         configureDevices();
+
+        // Zero the encoder at startup so current position reads as 0
+        zeroEncoder();
 
         // Set goal to idle position (-45 degrees)
         goalPosition = IntakePivotConstants.idlePosition;
@@ -75,33 +73,36 @@ public class IntakePivot extends SubsystemBase {
                 .openLoopRampRate(1)
                 .idleMode(IdleMode.kBrake);
 
-            leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+            // Convert NEO encoder from motor rotations to mechanism degrees
+            // 1 motor rotation = (360 / 35) degrees of pivot
+            leadMotorConfig.encoder
+                .positionConversionFactor(360.0 / 35.0)
+                .velocityConversionFactor(360.0 / 35.0 / 60.0);
 
-            // Pivot CANcoder
-            pivotCANcoderConfig = new CANcoderConfiguration();
-            pivotEncoder.getConfigurator().apply(
-                pivotCANcoderConfig.MagnetSensor
-                    .withAbsoluteSensorDiscontinuityPoint(1)
-                    .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
-                    .withMagnetOffset(-IntakePivotConstants.encoderOffset)
-            );
+            leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         } catch (Exception ex) {
             DriverStation.reportError("Failed to configure IntakePivot Subsystem", ex.getStackTrace());
         }
     }
 
+    /**
+     * Zero the NEO encoder so current position reads as 0 degrees.
+     */
+    public void zeroEncoder() {
+        pivotEncoder.setPosition(0);
+    }
+
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("IntakePivot Absolute Position", pivotEncoder.getAbsolutePosition().getValueAsDouble());
         SmartDashboard.putNumber("IntakePivot Position", getPivotEncoderPosition());
         SmartDashboard.putNumber("IntakePivot Goal", getPivotGoal());
         SmartDashboard.putData(this);
     }
 
-    /** Get the position of the pivotEncoder in degrees. */
+    /** Get the position of the pivot in degrees (already converted via positionConversionFactor). */
     public double getPivotEncoderPosition() {
-        return pivotEncoder.getAbsolutePosition().getValueAsDouble() * 360;
+        return pivotEncoder.getPosition();
     }
 
     /** Get the current pivot goal of the PID. */
