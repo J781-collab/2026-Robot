@@ -16,14 +16,11 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 public class Elevator extends SubsystemBase {
   private SparkMax elevatorMotor;
-  private SparkMax elevatorMotor2;
   private SparkMaxConfig elevatorMotorConfig;
-  private SparkMaxConfig elevatorMotor2Config;
 
   /** Creates a new Elevator. */
   public Elevator() {
     elevatorMotor = new SparkMax(21, MotorType.kBrushless);
-    elevatorMotor2 = new SparkMax(22, MotorType.kBrushless);
     
     configureDevices();
   }
@@ -36,14 +33,7 @@ public class Elevator extends SubsystemBase {
         .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(40);
 
-      elevatorMotor2Config = new SparkMaxConfig();
-      elevatorMotor2Config
-        .inverted(true)
-        .idleMode(IdleMode.kCoast)
-        .smartCurrentLimit(40);
-
       elevatorMotor.configure(elevatorMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-      elevatorMotor2.configure(elevatorMotor2Config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     } catch (Exception ex) {
       DriverStation.reportError("Failed to configure Elevator Subsystem", ex.getStackTrace());
     }
@@ -55,7 +45,6 @@ public class Elevator extends SubsystemBase {
    */
   public void setSpeed(double speed) {
     elevatorMotor.set(speed);
-    elevatorMotor2.set(speed);
   }
 
   /**
@@ -72,7 +61,6 @@ public class Elevator extends SubsystemBase {
    */
   public void stop() {
     elevatorMotor.set(0);
-    elevatorMotor2.set(0);
   }
 
   @Override

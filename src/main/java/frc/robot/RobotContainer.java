@@ -166,7 +166,7 @@ public class RobotContainer {
                 )
             )
         );
-        NamedCommands.registerCommand("feeder", feeder.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
         NamedCommands.registerCommand("elevator", elevator.setSpeedCommand(1.0));
         NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
 
