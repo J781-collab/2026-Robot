@@ -296,6 +296,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         /* Limelight vision integration — two cameras with fallback */
         SmartDashboard.putBoolean("Limelight 1 TV", kLimelight1.getTV());
         SmartDashboard.putBoolean("Limelight 2 TV", kLimelight2.getTV());
+        SmartDashboard.putBoolean("Sees AprilTag", kLimelight1.getTV() || kLimelight2.getTV());
         if (kLimelight1.getTV()) {
             addVisionMeasurement(
                 kLimelight1.getEstimatedRoboPose(),
