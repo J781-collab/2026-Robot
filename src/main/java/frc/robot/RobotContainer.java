@@ -57,7 +57,7 @@ public class RobotContainer {
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
-    private final SendableChooser<String>m_chooser = new SendableChooser<>();
+    private SendableChooser<Command> autoSelector;
     
     // Adjustable shooter duty cycle (op17 = increase, op19 = decrease by 5%)
     private double shooterDutyCycle = 0.0;
@@ -172,6 +172,10 @@ public class RobotContainer {
 
         // Create drivetrain AFTER named commands are registered
         drivetrain = TunerConstants.createDrivetrain();
+
+        // Build PathPlanner auto chooser and publish to SmartDashboard
+        autoSelector = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Auto Selector", autoSelector);
         
         configureBindings();
     }
@@ -308,22 +312,7 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-            // Reset our field centric heading to match the robot
-            // facing away from our alliance station wall (0 deg).
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            // Then slowly drive forward (away from us) for 5 seconds.
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(0.5)
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
-            )
-            .withTimeout(5.0),
-            // Finally idle for the rest of auton
-            drivetrain.applyRequest(() -> idle)
-        );
+        return autoSelector.getSelected();
     }
 
     /**
