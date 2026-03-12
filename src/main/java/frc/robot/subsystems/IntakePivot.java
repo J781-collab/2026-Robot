@@ -50,7 +50,7 @@ public class IntakePivot extends SubsystemBase {
             IntakePivotConstants.IntakePivotPID.I,
             IntakePivotConstants.IntakePivotPID.D
         );
-        pivotController.enableContinuousInput(0, 360);
+      //  pivotController.enableContinuousInput(0, 360);
 
         // Apply motor/encoder configs
         configureDevices();
@@ -97,6 +97,12 @@ public class IntakePivot extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("IntakePivot Position", getPivotEncoderPosition());
         SmartDashboard.putNumber("IntakePivot Goal", getPivotGoal());
+        SmartDashboard.putNumber("IntakePivot Velocity", pivotEncoder.getVelocity());
+        SmartDashboard.putNumber("IntakePivot Motor Output", leaderPivotMotor.getAppliedOutput());
+        SmartDashboard.putNumber("IntakePivot Motor Current", leaderPivotMotor.getOutputCurrent());
+        SmartDashboard.putNumber("IntakePivot PID Error", pivotController.getPositionError());
+        SmartDashboard.putBoolean("IntakePivot At Goal", Math.abs(getPivotEncoderPosition() - goalPosition) < 0.5);
+        SmartDashboard.putData("IntakePivot PID", pivotController);
         SmartDashboard.putData(this);
     }
 
@@ -157,7 +163,8 @@ public class IntakePivot extends SubsystemBase {
                     }, this
                 ).until(
                     () -> Math.abs(getPivotEncoderPosition() - goalPosition) < 0.5
-                ).withInterruptBehavior(InterruptionBehavior.kCancelSelf)
+                ).finallyDo(() -> leaderPivotMotor.set(0.0))
+                .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
             );
     }
 }
