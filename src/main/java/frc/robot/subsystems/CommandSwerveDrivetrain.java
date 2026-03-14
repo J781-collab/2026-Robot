@@ -303,13 +303,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 Utils.fpgaToCurrentTime(kLimelight1.getTimestamp()),
                 kLimelight1.getStandardDeviations()
             );
-        } else if (kLimelight2.getTV()) {
+        }
+        if (kLimelight2.getTV()) {
             addVisionMeasurement(
                 kLimelight2.getEstimatedRoboPose(),
                 Utils.fpgaToCurrentTime(kLimelight2.getTimestamp()),
                 kLimelight2.getStandardDeviations()
             );
         }
+        
 
         /* Limelight camera feeds — add these as "CameraServer" streams in SmartDashboard/Shuffleboard */
         try {

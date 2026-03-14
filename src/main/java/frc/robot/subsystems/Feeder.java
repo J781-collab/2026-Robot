@@ -30,7 +30,7 @@ public class Feeder extends SubsystemBase {
         .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(40);
 
-      feederMotor.configure(feederMotorConfig, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+      feederMotor.configure(feederMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     } catch (Exception ex) {
       DriverStation.reportError("Failed to configure Feeder Subsystem", ex.getStackTrace());
     }

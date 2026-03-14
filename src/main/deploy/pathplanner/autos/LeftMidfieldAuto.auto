@@ -50,13 +50,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "2ndleftToClimb"
+            "pathName": "shootToDepot"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "climb"
+            "name": "lowerIntake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeRollers"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DepoToShoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shootSequence"
           }
         }
       ]

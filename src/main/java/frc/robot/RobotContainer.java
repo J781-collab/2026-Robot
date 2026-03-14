@@ -221,14 +221,14 @@ public class RobotContainer {
         //             .withTargetDirection(drivetrain.getRotationRelativeMidpoint(tag1, tag2));
         //     })
         // );
-        driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
+      //  driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
         driverLT.whileTrue(conveyer.setSpeedCommand(0.5));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.setPivotGoal(90).andThen(pivot.pivotArm()));
-        driverLB.whileTrue(intakeRollers.setSpeedCommand(0.5));
-        driverLB.onFalse(pivot.setPivotGoal(-45).andThen(pivot.pivotArm()));
+        driverLB.onTrue(pivot.setPivotGoal(-50).andThen(pivot.pivotArm()));
+        driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
+        driverLB.onFalse(pivot.setPivotGoal(0).andThen(pivot.pivotArm()));
 
         // Shooter — hold RT to spin up with velocity PID, release to stop
         driverRT.whileTrue(shooter.setVelocityCommand(50.0));
@@ -250,12 +250,12 @@ public class RobotContainer {
 
         // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
         op17.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle + 0.05, 0.0, 1.0);
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.05, -1.0, 1.0);
             SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
             shooter.setDutyCycle(shooterDutyCycle);
         }, shooter));
         op19.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.05, 0.0, 1.0);
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.05, -1.0, 1.0);
             SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
             shooter.setDutyCycle(shooterDutyCycle);
         }, shooter));
