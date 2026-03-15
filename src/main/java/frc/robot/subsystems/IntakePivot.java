@@ -21,6 +21,10 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 
+
+
+
+
 import frc.robot.Constants.IntakePivotConstants;
 
 public class IntakePivot extends SubsystemBase {
@@ -43,6 +47,8 @@ public class IntakePivot extends SubsystemBase {
 
         // Get built-in NEO encoder
         pivotEncoder = leaderPivotMotor.getEncoder();
+
+
 
         // Config pivot PID
         pivotController = new PIDController(
@@ -68,7 +74,7 @@ public class IntakePivot extends SubsystemBase {
             // Lead pivot motor
             leadMotorConfig = new SparkMaxConfig();
             leadMotorConfig
-                .inverted(true)
+                .inverted(false)
                 .smartCurrentLimit(40)
                 .openLoopRampRate(1)
                 .idleMode(IdleMode.kBrake);
@@ -76,8 +82,8 @@ public class IntakePivot extends SubsystemBase {
             // Convert NEO encoder from motor rotations to mechanism degrees
             // 1 motor rotation = (360 / 35) degrees of pivot
             leadMotorConfig.encoder
-                .positionConversionFactor(360.0 / 35.0)
-                .velocityConversionFactor(360.0 / 35.0 / 60.0);
+                .positionConversionFactor(70.0 / 7.0)
+                .velocityConversionFactor(70.0 / 7.0 / 12.0);
 
             leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -123,6 +129,10 @@ public class IntakePivot extends SubsystemBase {
      * @param position target angle in degrees
      * @return a command
      */
+
+    
+
+
     public Command setPivotGoal(double position) {
         return Commands
             .runOnce(
@@ -140,7 +150,8 @@ public class IntakePivot extends SubsystemBase {
      *
      * @return a command
      */
-    public Command pivotArm() {
+
+    public Command pivotArm(double desiredpos) {
         return Commands
             .runOnce(
                 () -> {
@@ -150,19 +161,15 @@ public class IntakePivot extends SubsystemBase {
                 Commands.run(
                     () -> {
                         double pos = getPivotEncoderPosition();
-                        if (pos > IntakePivotConstants.minPivotPos && pos < IntakePivotConstants.maxPivotPos) {
-                            leaderPivotMotor.set(
-                                MathUtil.clamp(
-                                    pivotController.calculate(pos, goalPosition),
-                                    -0.1, 0.1
-                                )
-                            );
-                        } else {
-                            leaderPivotMotor.set(0.0);
-                        }
+                        double error = desiredpos-pos;
+                        if (Math.abs(error) < 5){
+                            leaderPivotMotor.set(0);
+                        }else if (pos < desiredpos) {
+                            leaderPivotMotor.set(0.25);
+                        } else if (pos > desiredpos) {
+                             leaderPivotMotor.set(-0.25);
+                        }// negative makes it clockwise
                     }, this
-                ).until(
-                    () -> Math.abs(getPivotEncoderPosition() - goalPosition) < 0.5
                 ).finallyDo(() -> leaderPivotMotor.set(0.0))
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
             );

@@ -147,12 +147,12 @@ public class RobotContainer {
 
     public RobotContainer() {
         // Register named commands BEFORE creating drivetrain (which calls AutoBuilder.configure)
-        NamedCommands.registerCommand("lowerIntake",
-            pivot.setPivotGoal(IntakePivotConstants.intakePosition).andThen(pivot.pivotArm()));
+      /*/  NamedCommands.registerCommand("lowerIntake",
+           // pivot.setPivotGoal(IntakePivotConstants.intakePosition).andThen(pivot.pivotArm()));
         NamedCommands.registerCommand("raiseIntake",
-            pivot.setPivotGoal(IntakePivotConstants.idlePosition).andThen(pivot.pivotArm()));
-        NamedCommands.registerCommand("intakeRollers", intakeRollers.setSpeedCommand(1.0));
-        NamedCommands.registerCommand("shootSequence",
+           // pivot.setPivotGoal(IntakePivotConstants.idlePosition).andThen(pivot.pivotArm()));
+        NamedCommands.registerCommand("intakeRollers", intakeRollers.setSpeedCommand(1.0));*/
+        NamedCommands.registerCommand("shootSequence", 
             Commands.parallel(
                 // Shooter runs the entire time
                 shooter.setVelocityCommand(50),
@@ -224,14 +224,16 @@ public class RobotContainer {
       //  driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverLT.whileTrue(conveyer.setSpeedCommand(0.5));
+        driverRT.whileTrue(conveyer.setSpeedCommand(0.5));
+        driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.setPivotGoal(-50).andThen(pivot.pivotArm()));
+        driverLB.onTrue(pivot.pivotArm(15));
         driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
-        driverLB.onFalse(pivot.setPivotGoal(0).andThen(pivot.pivotArm()));
+        driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(0));
 
         // Shooter — hold RT to spin up with velocity PID, release to stop
-        driverRT.whileTrue(shooter.setVelocityCommand(50.0));
+        driverRT.whileTrue(shooter.setVelocityCommand(
+            -50.0));
         // Shooter duty cycle on op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
 
@@ -240,7 +242,10 @@ public class RobotContainer {
         // Option 2: uses aim compensation for accurate shots while driving
         driverRB.whileTrue(
             getShootCommand()
-        );
+        ); 
+        op6.whileTrue(pivot.pivotArm(-360));
+        
+       // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
         op11.whileTrue(intakeRollers.setSpeedCommand(1));
         op12.whileTrue(intakeRollers.setSpeedCommand(-1));
         op13.whileTrue(conveyer.setSpeedCommand(1));
@@ -250,12 +255,12 @@ public class RobotContainer {
 
         // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
         op17.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.05, -1.0, 1.0);
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.1, -1.0, 1.0);
             SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
             shooter.setDutyCycle(shooterDutyCycle);
         }, shooter));
         op19.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.05, -1.0, 1.0);
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.1, -1.0, 1.0);
             SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
             shooter.setDutyCycle(shooterDutyCycle);
         }, shooter));
@@ -367,7 +372,7 @@ public class RobotContainer {
             // Wait for shooter to reach speed, then feed
             Commands.sequence(
                 Commands.waitUntil(() -> shooter.atTargetVelocity(
-                    Shooter.getInterpolatedSpeed(getDistanceToTarget()), 3.0)),
+                Shooter.getInterpolatedSpeed(getDistanceToTarget()), 3.0)),
                 Commands.parallel(
                     elevator.setSpeedCommand(0.5),
                     conveyer.setSpeedCommand(0.5)
