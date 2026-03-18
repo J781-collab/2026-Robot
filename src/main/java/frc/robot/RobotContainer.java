@@ -155,7 +155,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("shootSequence", 
             Commands.parallel(
                 // Shooter runs the entire time
-                shooter.setVelocityCommand(50),
+                shooter.setDutyCycleCommand(1),
                 // Wait for shooter to reach speed, then feed with conveyor + elevator
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(50, 2)),
@@ -163,7 +163,10 @@ public class RobotContainer {
                         conveyer.setSpeedCommand(1.0),
                         elevator.setSpeedCommand(1.0)
                     )
-                )
+                    
+                ),
+                Commands.sequence(Commands.waitSeconds(10),
+                pivot.pivotArm(400))
             )
         );
         NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
@@ -185,9 +188,9 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                    drive.withVelocityX(      ((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0)) //Square joystick values for finer control with small inputs while still keeping full tilt = full speed
-                        .withVelocityY(      ((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                        .withRotationalRate( ((driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
+                    drive.withVelocityX(      ( -1*(driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0)) //Square joystick values for finer control with small inputs while still keeping full tilt = full speed
+                        .withVelocityY(      ( -1*(driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+                        .withRotationalRate( ( -1*(driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
                     )
         );
         // Schedule `setPivotGoal` + `pivotArm` when the Xbox controller's X button is pressed,
@@ -227,22 +230,24 @@ public class RobotContainer {
         driverRT.whileTrue(conveyer.setSpeedCommand(0.5));
         driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.pivotArm(15));
+        driverLB.onTrue(pivot.pivotArm(400));
         driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
-        driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(0));
+        driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(400));
 
         // Shooter — hold RT to spin up with velocity PID, release to stop
-        driverRT.whileTrue(shooter.setVelocityCommand(
-            -50.0));
-        // Shooter duty cycle on op panel button 1
+    //    driverRT.whileTrue(shooter.setVelocityCommand(
+     //       -50.0));
+               driverRB.whileTrue(shooter.setDutyCycleCommand(
+            -1));
+        // Shooter duty cycle oon op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
 
         // Hold RB to shoot: auto-aim + spin up shooter + feed when ready
         // Option 1 (fallback): limits drive speed while shooting
         // Option 2: uses aim compensation for accurate shots while driving
-        driverRB.whileTrue(
-            getShootCommand()
-        ); 
+  ///      driverRB.whileTrue(
+    //        getShootCommand()
+     //   ); 
         op6.whileTrue(pivot.pivotArm(-360));
         
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
@@ -345,6 +350,7 @@ public class RobotContainer {
      * 
      * Everything stops when the button is released.
      */
+
     public Command getShootCommand() {
         return Commands.parallel(
             // Auto-aim while shooting — uses drivetrain subsystem

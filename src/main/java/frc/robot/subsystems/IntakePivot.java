@@ -165,9 +165,9 @@ public class IntakePivot extends SubsystemBase {
                         if (Math.abs(error) < 5){
                             leaderPivotMotor.set(0);
                         }else if (pos < desiredpos) {
-                            leaderPivotMotor.set(0.25);
+                            leaderPivotMotor.set(0.50);
                         } else if (pos > desiredpos) {
-                             leaderPivotMotor.set(-0.25);
+                             leaderPivotMotor.set(-0.50);
                         }// negative makes it clockwise
                     }, this
                 ).finallyDo(() -> leaderPivotMotor.set(0.0))
