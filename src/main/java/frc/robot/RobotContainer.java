@@ -190,7 +190,7 @@ public class RobotContainer {
             drivetrain.applyRequest(() ->
                     drive.withVelocityX(      ( -1*(driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0)) //Square joystick values for finer control with small inputs while still keeping full tilt = full speed
                         .withVelocityY(      ( -1*(driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                        .withRotationalRate( ( -1*(driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
+                        .withRotationalRate( ( (driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
                     )
         );
         // Schedule `setPivotGoal` + `pivotArm` when the Xbox controller's X button is pressed,
@@ -227,7 +227,7 @@ public class RobotContainer {
       //  driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverRT.whileTrue(conveyer.setSpeedCommand(0.5));
+        driverRT.whileTrue(conveyer.setSpeedCommand(1));
         driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
         driverLB.onTrue(pivot.pivotArm(400));
@@ -238,7 +238,7 @@ public class RobotContainer {
     //    driverRT.whileTrue(shooter.setVelocityCommand(
      //       -50.0));
                driverRB.whileTrue(shooter.setDutyCycleCommand(
-            -1));
+            -0.90));
         // Shooter duty cycle oon op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
 
@@ -249,9 +249,9 @@ public class RobotContainer {
     //        getShootCommand()
      //   ); 
         op6.whileTrue(pivot.pivotArm(-360));
-        
+        op3.whileTrue(pivot.pivotArm(-50));
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
-        op11.whileTrue(intakeRollers.setSpeedCommand(1));
+        op11.whileTrue(intakeRollers.setSpeedCommand(-1));
         op12.whileTrue(intakeRollers.setSpeedCommand(-1));
         op13.whileTrue(conveyer.setSpeedCommand(1));
         op14.whileTrue(conveyer.setSpeedCommand(-1));

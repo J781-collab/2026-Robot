@@ -52,15 +52,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private double m_lastSimTime;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
-    private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.k180deg;
+    private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
     /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
-    private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.kZero;
+    private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
     /* Limelight vision — two cameras with fallback */
-    private Vision kLimelight1 = new Vision("llone");
-    private Vision kLimelight2 = new Vision("lltwo");
+    private Vision kLimelight1 = new Vision("limelight-llone");
+    private Vision kLimelight2 = new Vision("limelight-lltwo");
 
     /* AprilTag field layout */
     private AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -296,7 +296,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         /* Limelight vision integration — two cameras with fallback */
         SmartDashboard.putBoolean("Limelight 1 TV", kLimelight1.getTV());
         SmartDashboard.putBoolean("Limelight 2 TV", kLimelight2.getTV());
-        SmartDashboard.putBoolean("Sees AprilTag", kLimelight1.getTV() || kLimelight2.getTV());
+        SmartDashboard.putBoolean("Sees AprilTag LL1", kLimelight1.getTV());
+              SmartDashboard.putBoolean("Sees AprilTag LL2", kLimelight2.getTV());
+
         //SmartDashboard.putNumber("CANcoder angle 1",  )
         if (kLimelight1.getTV()) {
             addVisionMeasurement(
@@ -314,12 +316,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         
 
-        /* Limelight camera feeds — add these as "CameraServer" streams in SmartDashboard/Shuffleboard */
+        /* Limelight camera feeds — accessible via port-forwarded USB addresses */
         try {
             SmartDashboard.putString("Limelight 1 Stream",
-                "http://" + kLimelight1.getDeviceName() + ".local:5800/stream.mjpg");
+                "http://10.7.81.2:5800/stream.mjpg");
             SmartDashboard.putString("Limelight 2 Stream",
-                "http://" + kLimelight2.getDeviceName() + ".local:5800/stream.mjpg");
+                "http://10.7.81.2:5810/stream.mjpg");
         } catch (Exception ex) {
             DriverStation.reportError("Failed to publish Limelight streams", ex.getStackTrace());
         }

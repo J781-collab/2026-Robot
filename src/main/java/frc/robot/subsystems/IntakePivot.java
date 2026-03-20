@@ -76,7 +76,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig
                 .inverted(false)
                 .smartCurrentLimit(40)
-                .openLoopRampRate(1)
+                .openLoopRampRate(0.001)
                 .idleMode(IdleMode.kBrake);
 
             // Convert NEO encoder from motor rotations to mechanism degrees
@@ -165,9 +165,9 @@ public class IntakePivot extends SubsystemBase {
                         if (Math.abs(error) < 5){
                             leaderPivotMotor.set(0);
                         }else if (pos < desiredpos) {
-                            leaderPivotMotor.set(0.50);
+                            leaderPivotMotor.set(1);
                         } else if (pos > desiredpos) {
-                             leaderPivotMotor.set(-0.50);
+                             leaderPivotMotor.set(-1);
                         }// negative makes it clockwise
                     }, this
                 ).finallyDo(() -> leaderPivotMotor.set(0.0))
