@@ -48,7 +48,7 @@ public class Shooter extends SubsystemBase {
                 null,        // Default ramp rate (1 V/s)
                 Volts.of(4), // Step voltage — 4V to prevent brownout
                 null,        // Default timeout (10s)
-                state -> SignalLogger.writeString("ShooterSysId_State", state.toString())
+                state -> SignalLogger.writeString("state", state.toString())
             ),
             new SysIdRoutine.Mechanism(
                 voltage -> {
