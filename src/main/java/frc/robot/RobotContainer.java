@@ -237,8 +237,8 @@ public class RobotContainer {
         // Shooter — hold RT to spin up with velocity PID, release to stop
     //    driverRT.whileTrue(shooter.setVelocityCommand(
      //       -50.0));
-               driverRB.whileTrue(shooter.setDutyCycleCommand(
-            -0.90));
+               //driverRB.whileTrue(shooter.setDutyCycleCommand(
+            //-0.90));
         // Shooter duty cycle oon op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
 
