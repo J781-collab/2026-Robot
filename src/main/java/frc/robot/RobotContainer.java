@@ -305,15 +305,15 @@ public class RobotContainer {
        
         
         test1.and(test2).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        test3.and(test4).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        test5.and(test6).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+       // test3.and(test4).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+      //  test5.and(test6).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         test7.and(test8).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Shooter SysId routines on test panel
-        test9.whileTrue(shooter.sysIdDynamic(Direction.kForward));
-        test10.whileTrue(shooter.sysIdDynamic(Direction.kReverse));
-        test11.whileTrue(shooter.sysIdQuasistatic(Direction.kForward));
-        test12.whileTrue(shooter.sysIdQuasistatic(Direction.kReverse));
+        test4.whileTrue(shooter.sysIdDynamic(Direction.kForward));
+        test5.whileTrue(shooter.sysIdDynamic(Direction.kReverse));
+        test9.whileTrue(shooter.sysIdQuasistatic(Direction.kForward));
+        test10.whileTrue(shooter.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on start button press.
         driverStart.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
