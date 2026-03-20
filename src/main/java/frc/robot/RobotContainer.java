@@ -259,11 +259,11 @@ public class RobotContainer {
         op16.whileTrue(elevator.setSpeedCommand(-1));
 
         // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
-        op17.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.1, -1.0, 1.0);
-            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
-            shooter.setDutyCycle(shooterDutyCycle);
-        }, shooter));
+        //op17.onTrue(Commands.runOnce(() -> {
+           // shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.1, -1.0, 1.0);
+          //  SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
+          //  shooter.setDutyCycle(shooterDutyCycle);
+        //}, shooter));
         op19.onTrue(Commands.runOnce(() -> {
             shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.1, -1.0, 1.0);
             SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
