@@ -167,7 +167,7 @@ public class RobotContainer {
                     
                 ),
                 Commands.sequence(Commands.waitSeconds(10),
-                pivot.pivotArm(400))
+                pivot.pivotArm(259))
             )
         );
         NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
@@ -231,9 +231,9 @@ public class RobotContainer {
         driverRT.whileTrue(conveyer.setSpeedCommand(1));
         driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.pivotArm(400));
+        driverLB.onTrue(pivot.pivotArm(250));
         driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
-        driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(400));
+        driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(250));
 
         // Shooter — hold RT to spin up with velocity PID, release to stop
     //    driverRT.whileTrue(shooter.setVelocityCommand(
@@ -250,7 +250,7 @@ public class RobotContainer {
     //        getShootCommand()
      //   ); 
         op6.whileTrue(pivot.pivotArm(-360));
-        op3.whileTrue(pivot.pivotArm(-50));
+        op3.whileTrue(pivot.pivotArm(0));
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
         op11.whileTrue(intakeRollers.setSpeedCommand(-1));
         op12.whileTrue(intakeRollers.setSpeedCommand(-1));

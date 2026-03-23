@@ -27,7 +27,7 @@ public class Elevator extends SubsystemBase {
 
   // Set current limits and config motor
   private void configureDevices() {
-    try {
+    try {   
       elevatorMotorConfig = new SparkMaxConfig();
       elevatorMotorConfig
         .idleMode(IdleMode.kCoast)
