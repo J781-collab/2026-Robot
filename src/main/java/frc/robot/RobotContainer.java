@@ -189,8 +189,8 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                    drive.withVelocityX(      ( -1*(driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0)) //Square joystick values for finer control with small inputs while still keeping full tilt = full speed
-                        .withVelocityY(      ( -1*(driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+                    drive.withVelocityX(      ( (driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0)) //Square joystick values for finer control with small inputs while still keeping full tilt = full speed
+                        .withVelocityY(      ( (driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
                         .withRotationalRate( ( (driverController.getRawAxis(4)*driverController.getRawAxis(4)) * (driverController.getRawAxis(4)>0 ? -1 : 1)) * AngularRate)
                     )
         );
@@ -238,8 +238,8 @@ public class RobotContainer {
         // Shooter — hold RT to spin up with velocity PID, release to stop
     //    driverRT.whileTrue(shooter.setVelocityCommand(
      //       -50.0));
-               //driverRB.whileTrue(shooter.setDutyCycleCommand(
-            //-0.90));
+               driverRB.whileTrue(shooter.setDutyCycleCommand(
+            -1));
         // Shooter duty cycle oon op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
 
