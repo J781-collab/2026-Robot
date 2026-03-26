@@ -33,11 +33,12 @@ public class Shooter extends SubsystemBase {
     private final SysIdRoutine sysIdRoutine;
 
     // PID gains for velocity control — tune these!
-    private static final double kP = 0.1;
+    private static final double kP = 0.0042183;
     private static final double kI = 0.0;
     private static final double kD = 0.0;
-    private static final double kS = 0.0;  // Static friction feedforward
-    private static final double kV = 0.12; // Velocity feedforward (volts per RPS)
+    private static final double kS = 0.09788;  // Static friction feedforward
+    private static final double kV = 0.10593; // Velocity feedforward (volts per RPS)
+    private static final double kA = 0.0027906; // Velocity feedforward (volts per RPS)
 
     public Shooter() {
         shooterMotor1 = new TalonFX(41);
@@ -80,7 +81,7 @@ public class Shooter extends SubsystemBase {
         slot0.kD = kD;
         slot0.kS = kS;
         slot0.kV = kV;
-
+        slot0.kA = kA;
         shooterMotor1.getConfigurator().apply(config);
         shooterMotor2.getConfigurator().apply(config);
     }
