@@ -167,7 +167,7 @@ public class RobotContainer {
                     
                 ),
                 Commands.sequence(Commands.waitSeconds(10),
-                pivot.pivotArm(259))
+                pivot.pivotArm(250))
             )
         );
         NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
@@ -248,7 +248,7 @@ public class RobotContainer {
   ///      driverRB.whileTrue(
     //        getShootCommand()
      //   ); 
-        op6.whileTrue(pivot.pivotArm(-360));
+        op6.whileTrue(pivot.pivotArm(250));
         op7.whileTrue(pivot.pivotArm(0));
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
         op11.whileTrue(intakeRollers.setSpeedCommand(-1));
