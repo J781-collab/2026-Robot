@@ -191,15 +191,13 @@ public class Shooter extends SubsystemBase {
      */
     private static final InterpolatingDoubleTreeMap shooterSpeedMap = new InterpolatingDoubleTreeMap();
     static {
-        shooterSpeedMap.put(0.0,  20.0);   // 0m   → 20 RPS
-        shooterSpeedMap.put(0.5,  25.0);   // 0.5m → 25 RPS
-        shooterSpeedMap.put(1.0,  30.0);   // 1m   → 30 RPS
-        shooterSpeedMap.put(1.5,  35.0);   // 1.5m → 35 RPS
-        shooterSpeedMap.put(2.0,  40.0);   // 2m   → 40 RPS
-        shooterSpeedMap.put(2.5,  45.0);   // 2.5m → 45 RPS
-        shooterSpeedMap.put(3.0,  50.0);   // 3m   → 50 RPS
-        shooterSpeedMap.put(3.5,  55.0);   // 3.5m → 55 RPS
-        shooterSpeedMap.put(4.0,  60.0);   // 4m   → 60 RPS
+        // 1m   → 30 RPS
+        shooterSpeedMap.put(.75,  -65.0);   // 1.5m → 35 RPS
+        shooterSpeedMap.put(1.27,  -70.0);   // 2m   → 40 RPS
+        shooterSpeedMap.put(1.87,  -80.0);   // 2.5m → 45 RPS
+        shooterSpeedMap.put(2.25,  -85.0);   // 3m   → 50 RPS
+        shooterSpeedMap.put(2.6,  -90.0);   // 3.5m → 55 RPS
+        shooterSpeedMap.put(3.31,  -100.0);   // 4m   → 60 RPS
     }
 
     /**
