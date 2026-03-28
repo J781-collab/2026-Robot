@@ -294,6 +294,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putBoolean("Sees AprilTag LL1", kLimelight1.getTV());
               SmartDashboard.putBoolean("Sees AprilTag LL2", kLimelight2.getTV());
 
+        /* AprilTag floor distance from each Limelight (2D, ignoring height) */
+        if (kLimelight1.getTV()) {
+            var tagPose1 = kLimelight1.getRobotTagRelativePose().getTranslation();
+            double dist1 = Math.sqrt(tagPose1.getX() * tagPose1.getX()
+                                   + tagPose1.getZ() * tagPose1.getZ());
+            SmartDashboard.putNumber("LL1 AprilTag Distance (m)", dist1);
+            SmartDashboard.putNumber("LL1 AprilTag ID", kLimelight1.getTagID());
+        }
+        if (kLimelight2.getTV()) {
+            var tagPose2 = kLimelight2.getRobotTagRelativePose().getTranslation();
+            double dist2 = Math.sqrt(tagPose2.getX() * tagPose2.getX()
+                                   + tagPose2.getZ() * tagPose2.getZ());
+            SmartDashboard.putNumber("LL2 AprilTag Distance (m)", dist2);
+            SmartDashboard.putNumber("LL2 AprilTag ID", kLimelight2.getTagID());
+        }
+
         //SmartDashboard.putNumber("CANcoder angle 1",  )
         if (kLimelight1.getTV()) {
             addVisionMeasurement(
@@ -404,7 +420,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .div(2.0);
         return midpoint
             .minus(getPose().getTranslation())
-            .getAngle();
+            .getAngle()
+            .rotateBy(Rotation2d.k180deg);
     }
 
     /**
@@ -466,6 +483,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         return compensatedTarget
             .minus(robotPos)
-            .getAngle();
+            .getAngle()
+            .rotateBy(Rotation2d.k180deg);
+    }
+
+    /**
+     * Gets the floor-plane distance (meters) to the nearest visible AprilTag
+     * using Limelight target-space pose data. Checks LL1 first, then LL2.
+     * Returns 0 if no tag is visible on either camera.
+     */
+    public double getLimelightAprilTagDistance() {
+        if (kLimelight1.getTV()) {
+            var t = kLimelight1.getRobotTagRelativePose().getTranslation();
+            return Math.sqrt(t.getX() * t.getX() + t.getZ() * t.getZ());
+        }
+        if (kLimelight2.getTV()) {
+            var t = kLimelight2.getRobotTagRelativePose().getTranslation();
+            return Math.sqrt(t.getX() * t.getX() + t.getZ() * t.getZ());
+        }
+        return 0.0;
     }
 }

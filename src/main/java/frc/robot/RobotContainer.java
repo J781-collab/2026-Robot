@@ -54,6 +54,11 @@ public class RobotContainer {
     private final SwerveRequest.FieldCentricFacingAngle driveAimAtTag = new SwerveRequest.FieldCentricFacingAngle()
             .withDeadband(MaxSpeed * 0.1)
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    // Configure the heading PID for auto-aim
+    {
+        driveAimAtTag.HeadingController.setPID(7, 0, 0);
+        driveAimAtTag.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
+    }
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
@@ -238,18 +243,39 @@ public class RobotContainer {
         // Shooter — hold RT to spin up with velocity PID, release to stop
     //    driverRT.whileTrue(shooter.setVelocityCommand(
      //       -50.0));
-        driverRB.whileTrue(shooter.setDutyCycleCommand(-1));
+        // Hold RB to auto-aim at AprilTags AND spin shooter at interpolated speed
+        driverRB.whileTrue(
+            Commands.parallel(
+                drivetrain.applyRequest(() -> {
+                    boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+                    int tag1 = isRed ? 9 : 25;
+                    int tag2 = isRed ? 10 : 26;
+                    Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
+                        ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
+                        : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                    return driveAimAtTag
+                        .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+                        .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+                        .withTargetDirection(aimAngle);
+                }),
+                shooter.setVelocityDynamicCommand(
+                    () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()))
+            )
+        );
         // Shooter duty cycle oon op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
-
+        op3.whileTrue(intakeRollers.setSpeedCommand(1));
+       op4.whileTrue(shooter.setVelocityDynamicCommand(
+            () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())));
         // Hold RB to shoot: auto-aim + spin up shooter + feed when ready
         // Option 1 (fallback): limits drive speed while shooting
         // Option 2: uses aim compensation for accurate shots while driving
   ///      driverRB.whileTrue(
     //        getShootCommand()
      //   ); 
-        op6.whileTrue(pivot.pivotArm(250));
-        op7.whileTrue(pivot.pivotArm(0));
+        op5.whileTrue(shooter.setVelocityCommand(5));    
+        op6.whileTrue(pivot.pivotArm(0));
+        op7.whileTrue(pivot.pivotArm(-250));   
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
         op11.whileTrue(intakeRollers.setSpeedCommand(-1));
         op12.whileTrue(intakeRollers.setSpeedCommand(-1));
@@ -259,26 +285,26 @@ public class RobotContainer {
         op16.whileTrue(elevator.setSpeedCommand(-1));
 
         // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
-        //op17.onTrue(Commands.runOnce(() -> {
-           // shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.1, -1.0, 1.0);
-          //  SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
-          //  shooter.setDutyCycle(shooterDutyCycle);
-        //}, shooter));
+        op17.onTrue(Commands.runOnce(() -> {
+            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.1, -1.0, 1.0);
+            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
+            shooter.setDutyCycle(shooterDutyCycle);
+        }, shooter));
         op19.onTrue(Commands.runOnce(() -> {
             shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.1, -1.0, 1.0);
             SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
             shooter.setDutyCycle(shooterDutyCycle);
         }, shooter));
-        // Adjustable shooter velocity PID: op18 = +5 RPS and run, op20 = -5 RPS and run
+        // Adjustable shooter velocity PID: op18= +5 RPS and run, op20 = -5 RPS and run
         op18.onTrue(Commands.runOnce(() -> {
-            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS + 5.0, 0.0, 100.0);
+            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS + 5.0, -100, 100.0);
             SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
-            shooter.setVelocity(shooterTargetRPS);
+            shooter.setVelocityCommand(shooterTargetRPS);
         }, shooter));
         op20.onTrue(Commands.runOnce(() -> {
-            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS - 5.0, 0.0, 100.0);
+            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS - 5.0, -100, 100.0);
             SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
-            shooter.setVelocity(shooterTargetRPS);
+            shooter.setVelocityCommand(shooterTargetRPS);
         }, shooter));
         // op21 = stop shooter and reset both duty cycle and velocity targets
         op21.onTrue(Commands.runOnce(() -> {

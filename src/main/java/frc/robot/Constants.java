@@ -113,12 +113,12 @@ public class Constants {
         }
 
         // Soft limits (degrees)
-        public static double maxPivotPos = 145;
-        public static double minPivotPos = 0;
+        public static double maxPivotPos = 145.0; 
+        public static double minPivotPos = 0.0;
 
         // Preset positions (degrees)
         public static double idlePosition = 0.0;
-        public static double intakePosition = 135.0;
+        public static double intakePosition = 145.0;
 
         public static int encoderID = 35;
         public static double encoderOffset = 0.0;
