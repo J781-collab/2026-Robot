@@ -327,15 +327,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         
 
-        /* Limelight camera feeds — accessible via port-forwarded USB addresses */
-        try {
-            SmartDashboard.putString("Limelight 1 Stream",
-                "http://10.7.81.2:5800/stream.mjpg");
-            SmartDashboard.putString("Limelight 2 Stream",
-                "http://10.7.81.2:5810/stream.mjpg");
-        } catch (Exception ex) {
-            DriverStation.reportError("Failed to publish Limelight streams", ex.getStackTrace());
-        }
+        /* Limelight camera streams (port-forwarded through roboRIO USB) */
+        SmartDashboard.putString("Limelight 1 Stream",
+            "http://10.7.81.2:5800/stream.mjpg");
+        SmartDashboard.putString("Limelight 2 Stream",
+            "http://10.7.81.2:5810/stream.mjpg");
 
         /* 3D Robot Pose from odometry */
         SmartDashboard.putNumber("Robot Pose X (m)", getState().Pose.getX());
