@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -182,6 +183,37 @@ public class RobotContainer {
         // Create drivetrain AFTER named commands are registered
         drivetrain = TunerConstants.createDrivetrain();
 
+        // Named command that requires drivetrain — registered after drivetrain is created
+        NamedCommands.registerCommand("aimAndShoot",
+            Commands.parallel(
+                // Auto-aim at the hub
+                drivetrain.applyRequest(() -> {
+                    boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+                    int tag1 = isRed ? 9 : 25;
+                    int tag2 = isRed ? 10 : 26;
+                    Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
+                        ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
+                        : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                    return driveAimAtTag
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withTargetDirection(aimAngle);
+                }),
+                // Spin up shooter at interpolated speed based on Limelight distance
+                shooter.setVelocityDynamicCommand(
+                    () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())),
+                // Wait for speed, then feed for remaining time
+                Commands.sequence(
+                    Commands.waitUntil(() -> shooter.atTargetVelocity(
+                        Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)),
+                    Commands.parallel(
+                        conveyer.setSpeedCommand(1.0),
+                        elevator.setSpeedCommand(1.0)
+                    )
+                )
+            ).withTimeout(10)
+        );
+
         // Build PathPlanner auto chooser and publish to SmartDashboard
         autoSelector = AutoBuilder.buildAutoChooser();
         SmartDashboard.putData("Auto Selector", autoSelector);
@@ -236,7 +268,7 @@ public class RobotContainer {
         driverRT.whileTrue(conveyer.setSpeedCommand(1));
         driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.pivotArm(250));
+        driverLB.onTrue(pivot.pivotArm(-250));
         driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
       //  driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(250));
 
@@ -264,6 +296,27 @@ public class RobotContainer {
         );
         // Shooter duty cycle oon op panel button 1
         op1.whileTrue(shooter.setDutyCycleCommand(0.75));
+        // Hold op2 to shake robot (destuck balls) while aiming at goal and shooting
+        op2.whileTrue(
+            Commands.parallel(
+                drivetrain.applyRequest(() -> {
+                    boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+                    int tag1 = isRed ? 9 : 25;
+                    int tag2 = isRed ? 10 : 26;
+                    Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
+                        ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
+                        : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                    // Gentle shake: oscillate X velocity with a sine wave (~6 Hz, 0.5 m/s amplitude)
+                    double shake = 0.5 * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    return driveAimAtTag
+                        .withVelocityX(shake)
+                        .withVelocityY(0)
+                        .withTargetDirection(aimAngle);
+                }),
+                shooter.setVelocityDynamicCommand(
+                    () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()))
+            )
+        );
         op3.whileTrue(intakeRollers.setSpeedCommand(1));
        op4.whileTrue(shooter.setVelocityDynamicCommand(
             () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())));
@@ -275,7 +328,14 @@ public class RobotContainer {
      //   ); 
         op5.whileTrue(shooter.setVelocityCommand(5));    
         op6.whileTrue(pivot.pivotArm(0));
-        op7.whileTrue(pivot.pivotArm(-250));   
+        op7.whileTrue(pivot.pivotArm(-250));
+        // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
+        op8.whileTrue(
+            Commands.repeatingSequence(
+                pivot.pivotArm(10).withTimeout(0.75),
+                pivot.pivotArm(-250).withTimeout(0.75)
+            )
+        );   
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
         op11.whileTrue(intakeRollers.setSpeedCommand(-1));
         op12.whileTrue(intakeRollers.setSpeedCommand(-1));
