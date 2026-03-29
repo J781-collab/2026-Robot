@@ -126,7 +126,7 @@ public class Shooter extends SubsystemBase {
      */
     public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
         return Math.abs(getMotor1VelocityRPS() - targetRPS) < toleranceRPS
-            && Math.abs(getMotor2VelocityRPS() - targetRPS) < toleranceRPS;
+            || Math.abs(getMotor2VelocityRPS() - targetRPS) < toleranceRPS;
     }
 
     // ---- Duty Cycle (Open Loop) Control ---- //
