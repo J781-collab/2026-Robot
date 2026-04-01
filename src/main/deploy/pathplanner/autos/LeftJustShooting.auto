@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "opshoot"
+            "pathName": "left shoot"
           }
         },
         {
@@ -15,17 +15,11 @@
           "data": {
             "name": "aimAndShoot"
           }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "opmidfield"
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Middle",
+  "folder": "left",
   "choreoAuto": false
 }

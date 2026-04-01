@@ -33,11 +33,17 @@
           "data": {
             "name": "shootSequence"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LEftShooTMidfield"
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Right",
   "choreoAuto": false
 }

@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LeftStraigLine"
+            "pathName": "LeftStartToMidfield"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "left",
   "choreoAuto": false
 }

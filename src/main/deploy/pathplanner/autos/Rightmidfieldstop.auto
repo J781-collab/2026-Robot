@@ -7,19 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "MiddleShhot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "aimAndShoot"
+            "pathName": "RigthToMidfield"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Middle",
+  "folder": "Right",
   "choreoAuto": false
 }
