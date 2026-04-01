@@ -179,6 +179,13 @@ public class RobotContainer {
         NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
         NamedCommands.registerCommand("elevator", elevator.setSpeedCommand(1.0));
         NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
+        // Lower intake pivot to 10 and run intake rollers at full speed
+        NamedCommands.registerCommand("intake",
+            Commands.parallel(
+                pivot.pivotArm(10),
+                intakeRollers.setSpeedCommand(-1)
+            )
+        );
 
         // Create drivetrain AFTER named commands are registered
         drivetrain = TunerConstants.createDrivetrain();
@@ -186,14 +193,13 @@ public class RobotContainer {
         // Named command that requires drivetrain — registered after drivetrain is created
         NamedCommands.registerCommand("aimAndShoot",
             Commands.parallel(
-                // Auto-aim at the hub
+                // Auto-aim at the hub (Red: tag 10, Blue: tag 25 — centered tags)
                 drivetrain.applyRequest(() -> {
                     boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                    int tag1 = isRed ? 9 : 25;
-                    int tag2 = isRed ? 10 : 26;
+                    int tag = isRed ? 10 : 25;
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                        ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
-                        : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                        ? drivetrain.getAimCompensatedRotation(tag, tag)
+                        : drivetrain.getRotationRelativeMidpoint(tag, tag);
                     return driveAimAtTag
                         .withVelocityX(0)
                         .withVelocityY(0)
@@ -202,10 +208,11 @@ public class RobotContainer {
                 // Spin up shooter at interpolated speed based on Limelight distance
                 shooter.setVelocityDynamicCommand(
                     () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())),
-                // Wait for speed, then feed for remaining time
+                // Wait for speed, pause 1s for aim to settle, then feed
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(
                         Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)),
+                    Commands.waitSeconds(2.0),
                     Commands.parallel(
                         conveyer.setSpeedCommand(1.0),
                         elevator.setSpeedCommand(1.0)
@@ -233,17 +240,16 @@ public class RobotContainer {
         );
         // Schedule `setPivotGoal` + `pivotArm` when the Xbox controller's X button is pressed,
         // cancelling on release.
-        // Hold X to drive while auto-aiming rotation toward the midpoint between two AprilTags
-        // Red alliance: aim between tags 9 & 10, Blue alliance: aim between tags 25 & 26
+        // Hold X to drive while auto-aiming rotation toward the centered AprilTag
+        // Red alliance: tag 10, Blue alliance: tag 25
         // Uses aim compensation if enabled, otherwise plain aim
         driverX.whileTrue(
             drivetrain.applyRequest(() -> {
                 boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                int tag1 = isRed ? 9 : 25;
-                int tag2 = isRed ? 10 : 26;
+                int tag = isRed ? 10 : 25;
                 Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                    ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
-                    : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                    ? drivetrain.getAimCompensatedRotation(tag, tag)
+                    : drivetrain.getRotationRelativeMidpoint(tag, tag);
                 return driveAimAtTag
                     .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
                     .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
@@ -268,7 +274,7 @@ public class RobotContainer {
         driverRT.whileTrue(conveyer.setSpeedCommand(1));
         driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.pivotArm(-250));
+        driverLB.onTrue(pivot.pivotArm(10));
         driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
       //  driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(250));
 
@@ -276,36 +282,41 @@ public class RobotContainer {
     //    driverRT.whileTrue(shooter.setVelocityCommand(
      //       -50.0));
         // Hold RB to auto-aim at AprilTags AND spin shooter at interpolated speed
+        // Hold driverRB to shake/agitate (rotation oscillation) while aiming at goal and shooting
         driverRB.whileTrue(
             Commands.parallel(
                 drivetrain.applyRequest(() -> {
                     boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                    int tag1 = isRed ? 9 : 25;
-                    int tag2 = isRed ? 10 : 26;
+                    int tag = isRed ? 10 : 25;
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                        ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
-                        : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                        ? drivetrain.getAimCompensatedRotation(tag, tag)
+                        : drivetrain.getRotationRelativeMidpoint(tag, tag);
+                    // Joystick driving
+                    double driveX = ((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
+                    double driveY = ((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
+                    // Agitate: oscillate rotation ±7° around the aim angle (~6 Hz)
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 3.0 * 2.0 * Math.PI);
+                    Rotation2d agitatedAngle = aimAngle.rotateBy(Rotation2d.fromRadians(shakeRadians));
                     return driveAimAtTag
-                        .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                        .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                        .withTargetDirection(aimAngle);
+                        .withVelocityX(driveX)
+                        .withVelocityY(driveY)
+                        .withTargetDirection(agitatedAngle);
                 }),
                 shooter.setVelocityDynamicCommand(
                     () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()))
             )
         );
         // Shooter duty cycle oon op panel button 1
-        op1.whileTrue(shooter.setDutyCycleCommand(0.75));
+      //  op1.whileTrue(shooter.setDutyCycleCommand(0.75));
         // Hold op2 to shake robot (destuck balls) while aiming at goal and shooting
         op2.whileTrue(
             Commands.parallel(
                 drivetrain.applyRequest(() -> {
                     boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                    int tag1 = isRed ? 9 : 25;
-                    int tag2 = isRed ? 10 : 26;
+                    int tag = isRed ? 10 : 25;
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                        ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
-                        : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                        ? drivetrain.getAimCompensatedRotation(tag, tag)
+                        : drivetrain.getRotationRelativeMidpoint(tag, tag);
                     // Gentle shake: oscillate X velocity with a sine wave (~6 Hz, 0.5 m/s amplitude)
                     double shake = 0.5 * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
                     return driveAimAtTag
@@ -327,13 +338,13 @@ public class RobotContainer {
     //        getShootCommand()
      //   ); 
         op5.whileTrue(shooter.setVelocityCommand(5));    
-        op6.whileTrue(pivot.pivotArm(0));
-        op7.whileTrue(pivot.pivotArm(-250));
+        op6.whileTrue(pivot.pivotArm(10));
+        op1.whileTrue(pivot.pivotArm(-300));
         // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
         op8.whileTrue(
             Commands.repeatingSequence(
-                pivot.pivotArm(10).withTimeout(0.75),
-                pivot.pivotArm(-250).withTimeout(0.75)
+                pivot.pivotArm(-50).withTimeout(0.5),
+                pivot.pivotArm(-250).withTimeout(0.5)
             )
         );   
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
@@ -380,6 +391,13 @@ public class RobotContainer {
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
+        // Set intake pivot to coast when disabled, brake when enabled
+        RobotModeTriggers.disabled().onTrue(
+            Commands.runOnce(() -> pivot.setCoastMode()).ignoringDisable(true)
+        );
+        RobotModeTriggers.disabled().onFalse(
+            Commands.runOnce(() -> pivot.setBrakeMode())
+        );
 
         driverA.whileTrue(drivetrain.applyRequest(() -> brake));
         driverB.whileTrue(drivetrain.applyRequest(() ->
@@ -416,11 +434,12 @@ public class RobotContainer {
 
     /**
      * Gets the distance to the alliance-specific shooting target.
-     * Red: midpoint of tags 9 & 10, Blue: midpoint of tags 25 & 26.
+     * Red: tag 10, Blue: tag 25 (centered tags).
      */
     private double getDistanceToTarget() {
         boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-        return drivetrain.getDistanceToMidpoint(isRed ? 9 : 25, isRed ? 10 : 26);
+        int tag = isRed ? 10 : 25;
+        return drivetrain.getDistanceToMidpoint(tag, tag);
     }
 
     /**
@@ -445,12 +464,11 @@ public class RobotContainer {
             // Auto-aim while shooting — uses drivetrain subsystem
             drivetrain.applyRequest(() -> {
                 boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                int tag1 = isRed ? 9 : 25;
-                int tag2 = isRed ? 10 : 26;
+                int tag = isRed ? 10 : 25;
 
                 Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                    ? drivetrain.getAimCompensatedRotation(tag1, tag2, ShootingConstants.BALL_EXIT_SPEED_MPS)
-                    : drivetrain.getRotationRelativeMidpoint(tag1, tag2);
+                    ? drivetrain.getAimCompensatedRotation(tag, tag)
+                    : drivetrain.getRotationRelativeMidpoint(tag, tag);
 
                 // Option 1 fallback: limit speed. Option 2: full speed.
                 double speedScale = ShootingConstants.ENABLE_AIM_COMPENSATION

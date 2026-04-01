@@ -76,7 +76,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig
                 .inverted(false)
                 .smartCurrentLimit(40)
-                .openLoopRampRate(1)
+                .openLoopRampRate(0.5)
                 .idleMode(IdleMode.kBrake);
 
             // Convert NEO encoder from motor rotations to mechanism degrees
@@ -173,5 +173,19 @@ public class IntakePivot extends SubsystemBase {
                 ).finallyDo(() -> leaderPivotMotor.set(0.0))
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
             );
+    }
+
+    /** Set the intake pivot motor to coast mode. */
+    public void setCoastMode() {
+        SparkMaxConfig coastConfig = new SparkMaxConfig();
+        coastConfig.idleMode(IdleMode.kCoast);
+        leaderPivotMotor.configure(coastConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    }
+
+    /** Set the intake pivot motor to brake mode. */
+    public void setBrakeMode() {
+        SparkMaxConfig brakeConfig = new SparkMaxConfig();
+        brakeConfig.idleMode(IdleMode.kBrake);
+        leaderPivotMotor.configure(brakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 }

@@ -14,8 +14,17 @@ public class Constants {
         /** Drive speed multiplier while shooting (option 1 fallback). 0.3 = 30% speed. */
         public static double SHOOT_SPEED_MULTIPLIER = 0.3;
 
-        /** Estimated ball exit speed in meters per second. Measure empirically! */
-        public static double BALL_EXIT_SPEED_MPS = 15.0;
+        /** Estimated ball exit speed in meters per second.
+         *  Calculated from 4" wheels (circumference = π × 0.1016m = 0.3192m)
+         *  and mid-range actual RPS (~78 RPS after -1.56 offset):
+         *  78.44 × 0.3192 ≈ 25.0 m/s */
+        public static double BALL_EXIT_SPEED_MPS = 25.0;
+
+        /** Depth offset (meters) from the AprilTag wall to the center of the hub. 
+         *  The aim point is shifted this far behind the tag surface.
+         *  Based on field data: hub is ~1.2m deep (front wall x≈11.31, back wall x≈12.52),
+         *  so center is ~0.6m from each wall. */
+        public static double HUB_DEPTH_OFFSET = 0.6;
     }
 
 

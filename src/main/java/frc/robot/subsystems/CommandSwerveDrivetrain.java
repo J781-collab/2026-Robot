@@ -32,6 +32,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.Constants.ShootingConstants;
 import frc.util.Vision;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -405,16 +406,42 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
+     * Computes the hub center point by taking the midpoint between two AprilTags
+     * and offsetting it behind the tag wall by HUB_DEPTH_OFFSET meters.
+     * Uses the average tag facing direction to determine "behind."
+     * @param tagID1 First AprilTag ID
+     * @param tagID2 Second AprilTag ID
+     * @return Translation2d of the hub center on the field
+     */
+    private Translation2d getHubCenter(int tagID1, int tagID2) {
+        Pose2d tag1 = getTagPose(tagID1);
+        Pose2d tag2 = getTagPose(tagID2);
+
+        // Midpoint of the two tags (center of the wall)
+        Translation2d midpoint = tag1.getTranslation()
+            .plus(tag2.getTranslation())
+            .div(2.0);
+
+        // Average the tag facing directions — tags face outward from the hub,
+        // so we offset OPPOSITE to their facing direction (into the hub center)
+        Rotation2d avgFacing = tag1.getRotation()
+            .plus(tag2.getRotation())
+            .div(2.0);
+
+        // Offset the midpoint INTO the hub (opposite of tag facing direction)
+        Translation2d offset = new Translation2d(-ShootingConstants.HUB_DEPTH_OFFSET, avgFacing);
+        return midpoint.plus(offset);
+    }
+
+    /**
      * Gets the relative rotation from the robot to the midpoint between two AprilTags.
      * @param tagID1 The ID of the first AprilTag
      * @param tagID2 The ID of the second AprilTag
      * @return Rotation2d pointing toward the midpoint of the two tags
      */
     public Rotation2d getRotationRelativeMidpoint(int tagID1, int tagID2) {
-        Translation2d midpoint = getTagPose(tagID1).getTranslation()
-            .plus(getTagPose(tagID2).getTranslation())
-            .div(2.0);
-        return midpoint
+        Translation2d hubCenter = getHubCenter(tagID1, tagID2);
+        return hubCenter
             .minus(getPose().getTranslation())
             .getAngle()
             .rotateBy(Rotation2d.k180deg);
@@ -427,10 +454,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @return Distance in meters
      */
     public double getDistanceToMidpoint(int tagID1, int tagID2) {
-        Translation2d midpoint = getTagPose(tagID1).getTranslation()
-            .plus(getTagPose(tagID2).getTranslation())
-            .div(2.0);
-        return getPose().getTranslation().getDistance(midpoint);
+        Translation2d hubCenter = getHubCenter(tagID1, tagID2);
+        return getPose().getTranslation().getDistance(hubCenter);
     }
 
     /**
@@ -449,22 +474,25 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * arrives at the target (based on time-of-flight), then aiming at the target
      * from that predicted position instead of the current position.
      * 
+     * Uses the actual distance-based exit velocity rather than a fixed constant,
+     * since shooter wheel speed varies with distance.
+     * 
      * @param tagID1 First AprilTag ID
      * @param tagID2 Second AprilTag ID
-     * @param ballExitSpeedMps Estimated ball exit speed in m/s
      * @return Rotation2d with velocity compensation applied
      */
-    public Rotation2d getAimCompensatedRotation(int tagID1, int tagID2, double ballExitSpeedMps) {
-        // Target = midpoint between two tags
-        Translation2d target = getTagPose(tagID1).getTranslation()
-            .plus(getTagPose(tagID2).getTranslation())
-            .div(2.0);
+    public Rotation2d getAimCompensatedRotation(int tagID1, int tagID2) {
+        // Target = hub center (midpoint offset behind the tag wall)
+        Translation2d target = getHubCenter(tagID1, tagID2);
 
         Translation2d robotPos = getPose().getTranslation();
         double distance = robotPos.getDistance(target);
 
+        // Get the actual exit velocity based on current distance
+        double ballExitSpeedMps = Shooter.getExitVelocityMps(distance);
+
         // Time of flight = distance / ball speed
-        double tof = distance / ballExitSpeedMps;
+        double tof = (ballExitSpeedMps > 0) ? distance / ballExitSpeedMps : 0;
 
         // Predict where the ball will be offset by robot velocity * time-of-flight
         // We subtract the offset from the target so we aim "ahead"

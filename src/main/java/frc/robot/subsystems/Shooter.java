@@ -210,6 +210,26 @@ public class Shooter extends SubsystemBase {
         return shooterSpeedMap.get(distanceMeters);
     }
 
+    /** Wheel diameter in meters (4 inch wheels). */
+    private static final double WHEEL_DIAMETER_M = 0.1016;
+    /** Wheel circumference in meters. */
+    private static final double WHEEL_CIRCUMFERENCE_M = Math.PI * WHEEL_DIAMETER_M;
+    /** Gear ratio between motor and shooter wheel. */
+    private static final double GEAR_RATIO = 1.53846153846;
+
+    /**
+     * Estimates the ball exit velocity (m/s) for a given distance.
+     * Uses the interpolated RPS, divides by the gear ratio to get wheel RPS,
+     * and converts to linear speed via the 4" wheel circumference.
+     * @param distanceMeters Distance to target in meters.
+     * @return Estimated ball exit speed in m/s.
+     */
+    public static double getExitVelocityMps(double distanceMeters) {
+        double motorRps = Math.abs(getInterpolatedSpeed(distanceMeters));
+        double wheelRps = motorRps / GEAR_RATIO;
+        return wheelRps * WHEEL_CIRCUMFERENCE_M;
+    }
+
     /**
      * Runs the shooter at a velocity supplied dynamically each loop.
      * Use this with a distance supplier for live interpolation.
