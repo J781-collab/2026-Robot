@@ -31,19 +31,7 @@
         {
           "type": "named",
           "data": {
-            "name": "shootSequence"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LeftToClimb"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
+            "name": "aimAndShoot"
           }
         }
       ]
