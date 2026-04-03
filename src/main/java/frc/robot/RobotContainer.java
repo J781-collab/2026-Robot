@@ -337,7 +337,10 @@ public class RobotContainer {
   ///      driverRB.whileTrue(
     //        getShootCommand()
      //   ); 
-        op5.whileTrue(shooter.setVelocityCommand(5));    
+        //op5.whileTrue(shooter.setVelocityCommand(5));    
+        op5.whileTrue(intakeRollers.setSpeedCommand(1));
+        op5.whileTrue(conveyer.setSpeedCommand(-1));
+        op5.whileTrue(elevator.setSpeedCommand(-1));
         op6.whileTrue(pivot.pivotArm(10));
         op1.whileTrue(pivot.pivotArm(-300));
         // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
