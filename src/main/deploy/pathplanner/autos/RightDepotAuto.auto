@@ -13,13 +13,7 @@
         {
           "type": "named",
           "data": {
-            "name": "lowerIntake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
+            "name": "intake"
           }
         },
         {

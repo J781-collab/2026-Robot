@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "RigthToMidfield"
+                  "pathName": "LeftToDepot"
                 }
               },
               {
@@ -26,7 +26,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "leftmidfieldBack"
+            "pathName": "DepoToShoot"
           }
         },
         {
@@ -34,11 +34,17 @@
           "data": {
             "name": "aimAndShoot"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftStraigLine"
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Right",
+  "folder": "left",
   "choreoAuto": false
 }

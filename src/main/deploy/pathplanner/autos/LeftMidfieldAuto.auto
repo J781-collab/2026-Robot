@@ -17,22 +17,29 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "lowerIntake"
+                  "name": "intake"
                 }
               }
             ]
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "MidToShoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "MidToShoot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -44,7 +51,7 @@
         {
           "type": "named",
           "data": {
-            "name": "shootSequence"
+            "name": "aimAndShoot"
           }
         },
         {
@@ -56,13 +63,7 @@
         {
           "type": "named",
           "data": {
-            "name": "lowerIntake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
+            "name": "intake"
           }
         },
         {

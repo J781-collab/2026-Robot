@@ -5,33 +5,28 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "RigthToMidfield"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "lowerIntake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RigthToMidfield"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "RightMidfeldToShoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
           }
         },
         {
