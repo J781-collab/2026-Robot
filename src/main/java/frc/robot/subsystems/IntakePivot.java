@@ -75,8 +75,8 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig = new SparkMaxConfig();
             leadMotorConfig
                 .inverted(false)
-                .smartCurrentLimit(40)
-                .openLoopRampRate(0.5)
+                .smartCurrentLimit(20)
+                .openLoopRampRate(0.25)
                 .idleMode(IdleMode.kBrake);
 
             // Convert NEO encoder from motor rotations to mechanism degrees

@@ -294,8 +294,8 @@ public class RobotContainer {
                     // Joystick driving
                     double driveX = ((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
                     double driveY = ((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
-                    // Agitate: oscillate rotation ±7° around the aim angle (~6 Hz)
-                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 3.0 * 2.0 * Math.PI);
+                    // Agitate: oscillate rotation ±7° around the aim angle (~12 Hz)
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 12.0 * 2.0 * Math.PI);
                     Rotation2d agitatedAngle = aimAngle.rotateBy(Rotation2d.fromRadians(shakeRadians));
                     return driveAimAtTag
                         .withVelocityX(driveX)
@@ -346,8 +346,8 @@ public class RobotContainer {
         // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
         op8.whileTrue(
             Commands.repeatingSequence(
-                pivot.pivotArm(-50).withTimeout(0.5),
-                pivot.pivotArm(-250).withTimeout(0.5)
+                pivot.pivotArm(-50).withTimeout(0.3),
+                pivot.pivotArm(-350).withTimeout(0.3)
             )
         );   
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
