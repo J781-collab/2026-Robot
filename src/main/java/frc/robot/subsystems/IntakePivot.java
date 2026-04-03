@@ -76,7 +76,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig
                 .inverted(false)
                 .smartCurrentLimit(20)
-                .openLoopRampRate(0.25)
+                .openLoopRampRate(0)
                 .idleMode(IdleMode.kBrake);
 
             // Convert NEO encoder from motor rotations to mechanism degrees
@@ -173,6 +173,24 @@ public class IntakePivot extends SubsystemBase {
                 ).finallyDo(() -> leaderPivotMotor.set(0.0))
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
             );
+    }
+
+    /**
+     * Pivot the wrist toward the desired position using PID control.
+     * Continuously runs the PID loop; stops the motor when interrupted.
+     *
+     * @param desiredPos target angle in converted encoder units
+     * @return a command
+     */
+    public Command pivotArmPID(double desiredPos) {
+        return Commands.run(
+            () -> {
+                double output = pivotController.calculate(getPivotEncoderPosition(), desiredPos);
+                output = MathUtil.clamp(output, -1.0, 1.0);
+                leaderPivotMotor.set(output);
+            }, this
+        ).finallyDo(() -> leaderPivotMotor.set(0.0))
+         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
     }
 
     /** Set the intake pivot motor to coast mode. */

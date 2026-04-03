@@ -173,7 +173,7 @@ public class RobotContainer {
                     
                 ),
                 Commands.sequence(Commands.waitSeconds(10),
-                pivot.pivotArm(250))
+                pivot.pivotArmPID(250))
             )
         );
         NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
@@ -182,7 +182,7 @@ public class RobotContainer {
         // Lower intake pivot to 10 and run intake rollers at full speed
         NamedCommands.registerCommand("intake",
             Commands.parallel(
-                pivot.pivotArm(10),
+                pivot.pivotArmPID(10),
                 intakeRollers.setSpeedCommand(-1)
             )
         );
@@ -274,7 +274,7 @@ public class RobotContainer {
         driverRT.whileTrue(conveyer.setSpeedCommand(1));
         driverRT.whileTrue(elevator.setSpeedCommand(1));
         // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
-        driverLB.onTrue(pivot.pivotArm(10));
+        driverLB.onTrue(pivot.pivotArmPID(10));
         driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
       //  driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(250));
 
@@ -294,8 +294,8 @@ public class RobotContainer {
                     // Joystick driving
                     double driveX = ((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
                     double driveY = ((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
-                    // Agitate: oscillate rotation ±7° around the aim angle (~12 Hz)
-                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 12.0 * 2.0 * Math.PI);
+                    // Agitate: oscillate rotation ±7° around the aim angle (~6 Hz)
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
                     Rotation2d agitatedAngle = aimAngle.rotateBy(Rotation2d.fromRadians(shakeRadians));
                     return driveAimAtTag
                         .withVelocityX(driveX)
@@ -341,16 +341,20 @@ public class RobotContainer {
         op5.whileTrue(intakeRollers.setSpeedCommand(1));
         op5.whileTrue(conveyer.setSpeedCommand(-1));
         op5.whileTrue(elevator.setSpeedCommand(-1));
-        op6.whileTrue(pivot.pivotArm(10));
-        op1.whileTrue(pivot.pivotArm(-300));
+        op6.whileTrue(pivot.pivotArmPID(10));
+        op1.whileTrue(pivot.pivotArmPID(-300));
         // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
         op8.whileTrue(
             Commands.repeatingSequence(
-                pivot.pivotArm(-50).withTimeout(0.3),
-                pivot.pivotArm(-350).withTimeout(0.3)
+                pivot.pivotArmPID(-100).withTimeout(0.5),
+                pivot.pivotArmPID(-350).withTimeout(0.5)
             )
         );   
        // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
+        // Hold op9 to move intake pivot to -250 using PID
+        op9.whileTrue(pivot.pivotArmPID(-250));
+        // Hold op10 to move intake pivot to 10 using PID
+        op10.whileTrue(pivot.pivotArmPID(0));
         op11.whileTrue(intakeRollers.setSpeedCommand(-1));
         op12.whileTrue(intakeRollers.setSpeedCommand(-1));
         op13.whileTrue(conveyer.setSpeedCommand(1));

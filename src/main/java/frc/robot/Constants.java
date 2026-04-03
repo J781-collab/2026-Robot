@@ -118,7 +118,7 @@ public class Constants {
         public static class IntakePivotPID {
             public static double P = 0.01;
             public static double I = 0.0;
-            public static double D = 0.0009;
+            public static double D = 0.00;
         }
 
         // Soft limits (degrees)
