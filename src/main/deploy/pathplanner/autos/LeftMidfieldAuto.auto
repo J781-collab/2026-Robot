@@ -17,7 +17,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "lowerIntake"
+                  "name": "intake"
                 }
               }
             ]
@@ -32,7 +32,7 @@
         {
           "type": "named",
           "data": {
-            "name": "intakeRollers"
+            "name": "intake"
           }
         },
         {
@@ -44,37 +44,7 @@
         {
           "type": "named",
           "data": {
-            "name": "shootSequence"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "shootToDepot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "lowerIntake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "DepoToShoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shootSequence"
+            "name": "aimAndShoot"
           }
         }
       ]

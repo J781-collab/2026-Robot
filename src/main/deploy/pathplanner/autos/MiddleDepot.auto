@@ -13,17 +13,30 @@
                 "data": {
                   "pathName": "Depo"
                 }
-              },
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DepoMidToDepot"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
               {
-                "type": "named",
+                "type": "path",
                 "data": {
-                  "name": "lowerIntake"
+                  "pathName": "sweepDepot"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "intakeRollers"
+                  "name": "intake"
                 }
               }
             ]

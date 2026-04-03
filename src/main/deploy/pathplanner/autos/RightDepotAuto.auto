@@ -13,31 +13,7 @@
         {
           "type": "named",
           "data": {
-            "name": "lowerIntake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeRollers"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "DepoToShoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "shootSequence"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LEftShooTMidfield"
           }
         }
       ]
