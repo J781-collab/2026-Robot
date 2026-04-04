@@ -167,8 +167,8 @@ public class RobotContainer {
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(50, 2)),
                     Commands.parallel(
-                        conveyer.setSpeedCommand(1.0),
-                        elevator.setSpeedCommand(1.0)
+                        conveyer.smartCommand(1.0),
+                        elevator.smartCommand(1.0)
                     )
                     
                 ),
@@ -176,14 +176,14 @@ public class RobotContainer {
                 pivot.pivotArmPID(250))
             )
         );
-        NamedCommands.registerCommand("conveyer", conveyer.setSpeedCommand(1.0));
-        NamedCommands.registerCommand("elevator", elevator.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("conveyer", conveyer.smartCommand(1.0));
+        NamedCommands.registerCommand("elevator", elevator.smartCommand(1.0));
         NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
-        // Lower intake pivot to 10 and run intake rollers at full speed
+        // Lower intake pivot to 10 and run intake rollers with jam detection
         NamedCommands.registerCommand("intake",
             Commands.parallel(
                 pivot.pivotArmPID(10),
-                intakeRollers.setSpeedCommand(-1)
+                intakeRollers.smartIntakeCommand(-1)
             )
         );
 
@@ -214,8 +214,8 @@ public class RobotContainer {
                         Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)),
                     Commands.waitSeconds(2.0),
                     Commands.parallel(
-                        conveyer.setSpeedCommand(1.0),
-                        elevator.setSpeedCommand(1.0)
+                        conveyer.smartCommand(1.0),
+                        elevator.smartCommand(1.0)
                     )
                 )
             ).withTimeout(10)
@@ -271,11 +271,19 @@ public class RobotContainer {
       //  driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverRT.whileTrue(conveyer.setSpeedCommand(1));
-        driverRT.whileTrue(elevator.setSpeedCommand(1));
-        // Hold LB to deploy intake (pivot to 90°) and run rollers; release returns to -45° and stops
+        // driverRT feeds only when shooter is within 10 RPS of interpolated target
+        driverRT.whileTrue(
+            Commands.parallel(
+                conveyer.smartCommand(1),
+                elevator.smartCommand(1)
+            ).beforeStarting(Commands.waitUntil(
+                () -> shooter.atTargetVelocity(
+                    Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)
+            ))
+        );
+        // Hold LB to deploy intake (pivot to 90°) and run rollers with jam detection
         driverLB.onTrue(pivot.pivotArmPID(10));
-        driverLB.whileTrue(intakeRollers.setSpeedCommand(-1));
+        driverLB.whileTrue(intakeRollers.smartIntakeCommand(-1));
       //  driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(250));
 
         // Shooter — hold RT to spin up with velocity PID, release to stop
@@ -331,12 +339,6 @@ public class RobotContainer {
         op3.whileTrue(intakeRollers.setSpeedCommand(1));
        op4.whileTrue(shooter.setVelocityDynamicCommand(
             () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())));
-        // Hold RB to shoot: auto-aim + spin up shooter + feed when ready
-        // Option 1 (fallback): limits drive speed while shooting
-        // Option 2: uses aim compensation for accurate shots while driving
-  ///      driverRB.whileTrue(
-    //        getShootCommand()
-     //   ); 
         //op5.whileTrue(shooter.setVelocityCommand(5));    
         op5.whileTrue(intakeRollers.setSpeedCommand(1));
         op5.whileTrue(conveyer.setSpeedCommand(-1));
@@ -361,6 +363,10 @@ public class RobotContainer {
         op14.whileTrue(conveyer.setSpeedCommand(-1));
         op15.whileTrue(elevator.setSpeedCommand(1));
         op16.whileTrue(elevator.setSpeedCommand(-1));
+        // Hold op22 to climb to target position using PID (inches)
+        op22.whileTrue(climber.moveToPositionCommand(7));
+        // Hold op23 to retract climber back to 0 using PID
+        op23.whileTrue(climber.moveToPositionCommand(0));
 
         // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
         op17.onTrue(Commands.runOnce(() -> {
@@ -438,83 +444,4 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         return autoSelector.getSelected();
     }
-
-    /**
-     * Gets the distance to the alliance-specific shooting target.
-     * Red: tag 10, Blue: tag 25 (centered tags).
-     */
-    private double getDistanceToTarget() {
-        boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-        int tag = isRed ? 10 : 25;
-        return drivetrain.getDistanceToMidpoint(tag, tag);
-    }
-
-    /**
-     * Creates a command that:
-     * 1. Auto-aims at the alliance target (with velocity compensation if enabled)
-     * 2. Spins up the shooter to an interpolated speed based on distance
-     * 3. Waits for the shooter to reach target velocity
-     * 4. Then runs the elevator and conveyer to feed balls into the shooter
-     * 
-     * If ENABLE_AIM_COMPENSATION is false (option 1 fallback):
-     *   - Drive speed is limited by SHOOT_SPEED_MULTIPLIER while shooting
-     *   - Aim uses plain rotation toward target
-     * If ENABLE_AIM_COMPENSATION is true (option 2):
-     *   - Full drive speed allowed
-     *   - Aim leads the target based on robot velocity
-     * 
-     * Everything stops when the button is released.
-     */
-
-    public Command getShootCommand() {
-        return Commands.parallel(
-            // Auto-aim while shooting — uses drivetrain subsystem
-            drivetrain.applyRequest(() -> {
-                boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                int tag = isRed ? 10 : 25;
-
-                Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                    ? drivetrain.getAimCompensatedRotation(tag, tag)
-                    : drivetrain.getRotationRelativeMidpoint(tag, tag);
-
-                // Option 1 fallback: limit speed. Option 2: full speed.
-                double speedScale = ShootingConstants.ENABLE_AIM_COMPENSATION
-                    ? 1.0
-                    : ShootingConstants.SHOOT_SPEED_MULTIPLIER;
-
-                return driveAimAtTag
-                    .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * speedScale)
-                    .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * speedScale)
-                    .withTargetDirection(aimAngle);
-            }),
-            // Shooter spins up and stays running the whole time
-            shooter.setVelocityDynamicCommand(() -> Shooter.getInterpolatedSpeed(getDistanceToTarget())),
-            // Wait for shooter to reach speed, then feed
-            Commands.sequence(
-                Commands.waitUntil(() -> shooter.atTargetVelocity(
-                Shooter.getInterpolatedSpeed(getDistanceToTarget()), 3.0)),
-                Commands.parallel(
-                    elevator.setSpeedCommand(0.5),
-                    conveyer.setSpeedCommand(0.5)
-                )
-            )
-        );
-    }
-
-    // OLD getShootCommand (no auto-aim, no speed limiting):
-    // public Command getShootCommand() {
-    //     return Commands.parallel(
-    //         // Shooter spins up and stays running the whole time
-    //         shooter.setVelocityDynamicCommand(() -> Shooter.getInterpolatedSpeed(getDistanceToTarget())),
-    //         // Wait for shooter to reach speed, then feed
-    //         Commands.sequence(
-    //             Commands.waitUntil(() -> shooter.atTargetVelocity(
-    //                 Shooter.getInterpolatedSpeed(getDistanceToTarget()), 3.0)),
-    //             Commands.parallel(
-    //                 elevator.setSpeedCommand(0.5),
-    //                 conveyer.setSpeedCommand(0.5)
-    //             )
-    //         )
-    //     );
-    // }
 }

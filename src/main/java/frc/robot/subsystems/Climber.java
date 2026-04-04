@@ -16,17 +16,13 @@ import com.revrobotics.RelativeEncoder;
 
 public class Climber extends SubsystemBase {
     private SparkMax climbmotor1;
-    private SparkMax climbmotor2;
     private SparkMaxConfig motorConfig;
-    private SparkMaxConfig motor2Config;
     
-    // Encoders for closed-loop control
+    // Encoder for closed-loop control
     private RelativeEncoder encoder1;
-    private RelativeEncoder encoder2;
     
-    // PID Controllers
+    // PID Controller
     private PIDController pidController1;
-    private PIDController pidController2;
     
     // PID Gains
     private static final double kP = 0.1;
@@ -38,39 +34,35 @@ public class Climber extends SubsystemBase {
     
     public Climber() {
         climbmotor1 = new SparkMax(51, MotorType.kBrushless);
-        climbmotor2 = new SparkMax(52, MotorType.kBrushless);
         
-        // Get encoders
+        // Get encoder
         encoder1 = climbmotor1.getEncoder();
-        encoder2 = climbmotor2.getEncoder();
         
-        // Initialize PID controllers
+        // Initialize PID controller
         pidController1 = new PIDController(kP, kI, kD);
-        pidController2 = new PIDController(kP, kI, kD);
         
-        // Set tolerances
+        // Set tolerance
         pidController1.setTolerance(0.5, 0.5);
-        pidController2.setTolerance(0.5, 0.5);
         
         configureDevices();
     }
     
     private void configureDevices() {
-        // Configure motor 1
         motorConfig = new SparkMaxConfig();
         motorConfig
             .inverted(false)
             .idleMode(IdleMode.kBrake)
             .smartCurrentLimit(40);
+
+        // 35:1 gear reduction, 0.75" diameter pulley
+        // Position: inches of linear travel per motor rotation = (π × 0.75) / 35
+        // Velocity: inches per second
+        double inchesPerMotorRot = Math.PI * 0.75 / 35.0;
+        motorConfig.encoder
+            .positionConversionFactor(inchesPerMotorRot)
+            .velocityConversionFactor(inchesPerMotorRot / 60.0);
+
         climbmotor1.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        
-        // Configure motor 2
-        motor2Config = new SparkMaxConfig();
-        motor2Config
-            .inverted(true)  // Inverted to mirror motor 1
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(40);
-        climbmotor2.configure(motor2Config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
     
     /**
@@ -83,52 +75,27 @@ public class Climber extends SubsystemBase {
     }
     
     /**
-     * Gets current height (average of both motors).
+     * Gets current height.
      * @return Current height in rotations
      */
     public double getCurrentHeight() {
-        return (encoder1.getPosition() + encoder2.getPosition()) / 2.0;
-    }
-    
-    /**
-     * Gets motor 1 height.
-     * @return Motor 1 position in rotations
-     */
-    public double getMotor1Height() {
         return encoder1.getPosition();
     }
     
     /**
-     * Gets motor 2 height.
-     * @return Motor 2 position in rotations
-     */
-    public double getMotor2Height() {
-        return encoder2.getPosition();
-    }
-    
-    /**
      * Check if at target height.
-     * @return true if both motors are at target
+     * @return true if motor is at target
      */
     public boolean atTarget() {
-        return pidController1.atSetpoint() && pidController2.atSetpoint();
+        return pidController1.atSetpoint();
     }
     
     /**
-     * Reset encoders to zero.
+     * Reset encoder to zero.
      */
     public void resetEncoders() {
         encoder1.setPosition(0);
-        encoder2.setPosition(0);
         targetHeight = 0;
-    }
-    
-    /**
-     * Get height difference between motors (for synchronization).
-     * @return Height difference in rotations
-     */
-    public double getHeightDifference() {
-        return Math.abs(encoder1.getPosition() - encoder2.getPosition());
     }
     
     /**
@@ -139,44 +106,30 @@ public class Climber extends SubsystemBase {
      */
     public void setPIDGains(double p, double i, double d) {
         pidController1.setPID(p, i, d);
-        pidController2.setPID(p, i, d);
     }
     
     @Override
     public void periodic() {
         if (usePID) {
-            // Calculate PID outputs
             double output1 = pidController1.calculate(encoder1.getPosition(), targetHeight);
-            double output2 = pidController2.calculate(encoder2.getPosition(), targetHeight);
-            
-            // Clamp to [-1, 1]
             output1 = Math.max(-1.0, Math.min(1.0, output1));
-            output2 = Math.max(-1.0, Math.min(1.0, output2));
-            
-            // Apply outputs
             climbmotor1.set(output1);
-            climbmotor2.set(output2);
             
-            // Telemetry
             SmartDashboard.putNumber("Climber/Target Height", targetHeight);
-            SmartDashboard.putNumber("Climber/Motor1 Height", encoder1.getPosition());
-            SmartDashboard.putNumber("Climber/Motor2 Height", encoder2.getPosition());
-            SmartDashboard.putNumber("Climber/Avg Height", getCurrentHeight());
-            SmartDashboard.putNumber("Climber/Height Difference", getHeightDifference());
+            SmartDashboard.putNumber("Climber/Motor Height", encoder1.getPosition());
             SmartDashboard.putBoolean("Climber/At Target", atTarget());
-            SmartDashboard.putNumber("Climber/Motor1 Output", output1);
-            SmartDashboard.putNumber("Climber/Motor2 Output", output2);
+            SmartDashboard.putNumber("Climber/Motor Output", output1);
         }
     }
+
     public void setSpeed(double speed) {
-        usePID = false;  // Disable PID when using manual control
+        usePID = false;
         climbmotor1.set(speed);
-        climbmotor2.set(speed);
     }
 
     /**
      * Set the motor speed as a command (manual duty cycle control).
-     * @param speed [-1, 1] speed to set the motors to.
+     * @param speed [-1, 1] speed to set the motor to.
      * @return A command that sets the speed.
      */
     public Command setSpeedCommand(double speed) {
@@ -184,24 +137,28 @@ public class Climber extends SubsystemBase {
     }
     
     /**
-     * Move to target height using PID control.
-     * @param height Target height in rotations
-     * @return A command that moves to the target height
+     * Move to target position using PID control.
+     * Continuously runs the PID loop; stops the motor when interrupted.
+     *
+     * @param position Target position in rotations
+     * @return A command that holds the target position
      */
-    public Command moveToHeightCommand(double height) {
-        return runOnce(() -> setTargetHeight(height))
-            .andThen(run(() -> {}))
-            .withName("Move Climber to Height");
+    public Command moveToPositionCommand(double position) {
+        return this.run(() -> {
+            double output = pidController1.calculate(encoder1.getPosition(), position);
+            output = Math.max(-1.0, Math.min(1.0, output));
+            climbmotor1.set(output);
+        }).finallyDo(() -> {
+            climbmotor1.set(0);
+        });
     }
 
     /**
-     * Stop both motors.
+     * Stop the motor.
      */
     public void stop() {
         usePID = false;
         climbmotor1.set(0);
-        climbmotor2.set(0);
     }
 
 }
-    
