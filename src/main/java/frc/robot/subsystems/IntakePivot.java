@@ -75,7 +75,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig = new SparkMaxConfig();
             leadMotorConfig
                 .inverted(false)
-                .smartCurrentLimit(20)
+                .smartCurrentLimit(7)  // Low limit — 100:1 gear ratio means huge torque
                 .openLoopRampRate(0)
                 .idleMode(IdleMode.kBrake);
 
@@ -115,6 +115,16 @@ public class IntakePivot extends SubsystemBase {
     /** Get the position of the pivot in degrees (already converted via positionConversionFactor). */
     public double getPivotEncoderPosition() {
         return pivotEncoder.getPosition();
+    }
+
+    /** Get the pivot motor velocity in converted units. */
+    public double getVelocity() {
+        return pivotEncoder.getVelocity();
+    }
+
+    /** Get the pivot motor current draw in amps. */
+    public double getCurrent() {
+        return leaderPivotMotor.getOutputCurrent();
     }
 
     /** Get the current pivot goal of the PID. */
@@ -165,9 +175,9 @@ public class IntakePivot extends SubsystemBase {
                         if (Math.abs(error) < 5){
                             leaderPivotMotor.set(0);
                         }else if (pos < desiredpos) {
-                            leaderPivotMotor.set(0.5);
+                            leaderPivotMotor.set(1.0);
                         } else if (pos > desiredpos) {
-                             leaderPivotMotor.set(-0.5);
+                             leaderPivotMotor.set(-1.0);
                         }// negative makes it clockwise
                     }, this
                 ).finallyDo(() -> leaderPivotMotor.set(0.0))
@@ -191,6 +201,108 @@ public class IntakePivot extends SubsystemBase {
             }, this
         ).finallyDo(() -> leaderPivotMotor.set(0.0))
          .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+    }
+
+    /**
+     * Smart agitation command that drives inward until it hits the ball pile
+     * (current spike + velocity drop), backs off, then slams back in.
+     * Each cycle it can go deeper as balls are shot out and the pile shrinks.
+     * 
+     * Behavior:
+     *   1. Drive continuously inward toward hardLimit
+     *   2. When current spikes AND velocity drops → hit the ball pile
+     *   3. Record the hit position, retreat by RETREAT_AMOUNT
+     *   4. Once retreat position is reached, slam back inward toward hardLimit
+     *   5. Repeat — will go deeper each time as pile shrinks
+     * 
+     * Uses PID control for smooth motion.
+     *
+     * @param startPos         Starting inward position (e.g. -100)
+     * @param hardLimit        Absolute deepest allowed position (e.g. -450)
+     * @return A command that agitates with adaptive depth
+     */
+    public Command smartAgitateCommand(double startPos, double hardLimit) {
+        // Mutable state
+        final double[] targetPos = { startPos };
+        final boolean[] pushingInward = { true };
+
+        // Thresholds — conservative for 100:1 gear reduction
+        final double HIT_CURRENT_THRESHOLD = 4.0;   // amps — huge torque at 100:1
+        final double STALL_VELOCITY_THRESHOLD = 473.0; // ~1/10 of max motor converted velocity — stalled
+        final double RETREAT_AMOUNT = 150.0;         // back off this many encoder units after a hit
+        final int GRACE_CYCLES = 5;                  // ~100ms — let motor accelerate before checking
+        final double ARRIVE_TOLERANCE = 15.0;        // "close enough" to retreat target
+        final int PAUSE_CYCLES = 12;                 // ~0.25s pause between cycles
+
+        final int[] cycleCount = { 0 };
+        final int[] hitCount = { 0 };
+        final double[] lastHitPos = { startPos };
+        final boolean[] pausing = { false };
+
+        return Commands.run(() -> {
+            double current = Math.abs(getCurrent());
+            double velocity = Math.abs(getVelocity());
+            double pos = getPivotEncoderPosition();
+
+            cycleCount[0]++;
+
+            if (pushingInward[0]) {
+                // Driving inward — target is always the hard limit
+                targetPos[0] = hardLimit;
+
+                // Check for hit (only after grace period to let motor accelerate)
+                // Trigger on current spike OR velocity stall while driving inward
+                boolean currentHit = current > HIT_CURRENT_THRESHOLD;
+                // Motor-side velocity — if magnitude is below threshold, arm is stalled
+                boolean velocityHit = velocity < STALL_VELOCITY_THRESHOLD;
+
+                if (cycleCount[0] > GRACE_CYCLES
+                        && (currentHit || velocityHit)) {
+                    // Hit the pile! Retreat from current ACTUAL position
+                    pushingInward[0] = false;
+                    cycleCount[0] = 0;
+                    hitCount[0]++;
+                    lastHitPos[0] = pos;
+                    targetPos[0] = Math.min(pos + RETREAT_AMOUNT, startPos);
+                }
+            } else if (!pausing[0]) {
+                // Retreating — wait for arm to actually reach retreat position
+                if (Math.abs(pos - targetPos[0]) < ARRIVE_TOLERANCE) {
+                    // Done retreating — pause before next push
+                    pausing[0] = true;
+                    cycleCount[0] = 0;
+                }
+            } else {
+                // Pausing — hold position for ~0.25s before slamming back in
+                if (cycleCount[0] >= PAUSE_CYCLES) {
+                    pushingInward[0] = true;
+                    pausing[0] = false;
+                    cycleCount[0] = 0;
+                }
+            }
+
+            // PID drive toward current target
+            double output = pivotController.calculate(pos, targetPos[0]);
+            output = MathUtil.clamp(output, -1.0, 1.0);
+            leaderPivotMotor.set(output);
+
+            // Telemetry
+            SmartDashboard.putNumber("IntakePivot/Agitate Target", targetPos[0]);
+            SmartDashboard.putNumber("IntakePivot/Agitate Position", pos);
+            SmartDashboard.putNumber("IntakePivot/Agitate Current", current);
+            SmartDashboard.putNumber("IntakePivot/Agitate Velocity", velocity);
+            SmartDashboard.putNumber("IntakePivot/Agitate Current Threshold", HIT_CURRENT_THRESHOLD);
+            SmartDashboard.putNumber("IntakePivot/Agitate Velocity Threshold", STALL_VELOCITY_THRESHOLD);
+            SmartDashboard.putNumber("IntakePivot/Agitate PID Output", output);
+            SmartDashboard.putNumber("IntakePivot/Agitate Grace Count", cycleCount[0]);
+            SmartDashboard.putNumber("IntakePivot/Agitate Hit Count", hitCount[0]);
+            SmartDashboard.putNumber("IntakePivot/Agitate Last Hit Pos", lastHitPos[0]);
+            SmartDashboard.putNumber("IntakePivot/Agitate Raw Velocity", getVelocity());
+            SmartDashboard.putBoolean("IntakePivot/Agitate Pushing", pushingInward[0]);
+            SmartDashboard.putBoolean("IntakePivot/Agitate Pausing", pausing[0]);
+        }, this)
+        .finallyDo(() -> leaderPivotMotor.set(0.0))
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
     }
 
     /** Set the intake pivot motor to coast mode. */

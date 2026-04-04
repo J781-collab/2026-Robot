@@ -344,6 +344,9 @@ public class RobotContainer {
         op5.whileTrue(conveyer.setSpeedCommand(-1));
         op5.whileTrue(elevator.setSpeedCommand(-1));
         op6.whileTrue(pivot.pivotArmPID(10));
+        // Hold op7 to smart-agitate: pushes inward until hitting ball pile, backs off, repeats
+        // Each cycle goes deeper as balls are shot out. Hard-limited at -450.
+        op7.whileTrue(pivot.smartAgitateCommand(-100, -450));
         op1.whileTrue(pivot.pivotArmPID(-300));
         // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
         op8.whileTrue(
