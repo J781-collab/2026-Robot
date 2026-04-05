@@ -220,7 +220,7 @@ public class IntakePivot extends SubsystemBase {
      * Uses PID control for smooth motion.
      *
      * @param startPos         Starting inward position (e.g. -100)
-     * @param hardLimit        Absolute deepest allowed position (e.g. -450)
+     * @param hardLimit        Absolute deepest allowed position (e.g. -420)
      * @return A command that agitates with adaptive depth
      */
     public Command smartAgitateCommand(double startPos, double hardLimit) {

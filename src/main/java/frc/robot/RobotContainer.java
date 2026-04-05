@@ -81,6 +81,7 @@ public class RobotContainer {
     public final Trigger driverX = new Trigger(() -> driverController.getRawButton(3));
     public final Trigger driverY = new Trigger(() -> driverController.getRawButton(4));
     public final Trigger driverStart = new Trigger(() -> driverController.getRawButton(8));
+    public final Trigger driverBack = new Trigger(() -> driverController.getRawButton(7));
 
     public final Trigger driverRT = new Trigger(() -> driverController.getRawAxis(3) > 0.5);
     public final Trigger driverLT = new Trigger(() -> driverController.getRawAxis(2) > 0.5);      
@@ -162,10 +163,10 @@ public class RobotContainer {
         NamedCommands.registerCommand("conveyer", conveyer.smartCommand(1.0));
         NamedCommands.registerCommand("elevator", elevator.smartCommand(1.0));
         NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
-        // Lower intake pivot to 10 and run intake rollers with jam detection
+        // Lower intake pivot to 0 and run intake rollers with jam detection
         NamedCommands.registerCommand("intake",
             Commands.parallel(
-                pivot.pivotArmPID(10),
+                pivot.pivotArmPID(0),
                 intakeRollers.smartIntakeCommand(-1)
             )
         );
@@ -229,19 +230,19 @@ public class RobotContainer {
         // Hold X to drive while auto-aiming rotation toward the centered AprilTag
         // Red alliance: tag 10, Blue alliance: tag 25
         // Uses aim compensation if enabled, otherwise plain aim
-        driverX.whileTrue(
-            drivetrain.applyRequest(() -> {
-                boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                int tag = isRed ? 10 : 25;
-                Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                    ? drivetrain.getAimCompensatedRotation(tag, tag)
-                    : drivetrain.getRotationRelativeMidpoint(tag, tag);
-                return driveAimAtTag
-                    .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                    .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
-                    .withTargetDirection(aimAngle);
-            })
-        );
+        // driverX.whileTrue(
+        //     drivetrain.applyRequest(() -> {
+        //         boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+        //         int tag = isRed ? 10 : 25;
+        //         Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
+        //             ? drivetrain.getAimCompensatedRotation(tag, tag)
+        //             : drivetrain.getRotationRelativeMidpoint(tag, tag);
+        //         return driveAimAtTag
+        //             .withVelocityX(((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+        //             .withVelocityY(((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0))
+        //             .withTargetDirection(aimAngle);
+        //     })
+        // );
         // OLD driverX (no aim compensation):
         // driverX.whileTrue(
         //     drivetrain.applyRequest(() -> {
@@ -268,8 +269,8 @@ public class RobotContainer {
                     Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)
             ))
         );
-        // Hold LB to deploy intake (pivot to 90°) and run rollers with jam detection
-        driverLB.onTrue(pivot.pivotArmPID(10));
+        // Hold LB to deploy intake (pivot to 0°) and run rollers with jam detection
+        driverLB.onTrue(pivot.pivotArmPID(0));
         driverLB.whileTrue(
             Commands.parallel(
                 intakeRollers.smartIntakeCommand(-1)
@@ -306,97 +307,51 @@ public class RobotContainer {
                     () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()))
             )
         );
-        // Shooter duty cycle oon op panel button 1
-      //  op1.whileTrue(shooter.setDutyCycleCommand(0.75));
-        // Hold op2 to shake robot (destuck balls) while aiming at goal and shooting
-        op2.whileTrue(
-            Commands.parallel(
-                drivetrain.applyRequest(() -> {
-                    boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                    int tag = isRed ? 10 : 25;
-                    Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
-                        ? drivetrain.getAimCompensatedRotation(tag, tag)
-                        : drivetrain.getRotationRelativeMidpoint(tag, tag);
-                    // Gentle shake: oscillate X velocity with a sine wave (~6 Hz, 0.5 m/s amplitude)
-                    double shake = 0.5 * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
-                    return driveAimAtTag
-                        .withVelocityX(shake)
-                        .withVelocityY(0)
-                        .withTargetDirection(aimAngle);
-                }),
-                shooter.setVelocityDynamicCommand(
-                    () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()))
-            )
-        );
-        op3.whileTrue(
-            Commands.parallel(
-                intakeRollers.setSpeedCommand(1)
-            )
-        );
-       op4.whileTrue(shooter.setVelocityDynamicCommand(
-            () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())));
-        //op5.whileTrue(shooter.setVelocityCommand(5));    
+        // ===== OPERATOR PANEL BINDINGS (numerical order) =====
+
+        // op1: Pivot PID to -300
+        op1.whileTrue(pivot.pivotArmPID(-300));
+        // op2: Pivot PID to -50
+        op2.whileTrue(pivot.pivotArmPID(-50));
+        // op3: commented out (was intakeRollers speed 1)
+        // op4: commented out (was shooter dynamic velocity)
+        // op5: Reverse all — intakeRollers +1, conveyer -1, elevator -1
         op5.whileTrue(intakeRollers.setSpeedCommand(1));
         op5.whileTrue(conveyer.setSpeedCommand(-1));
         op5.whileTrue(elevator.setSpeedCommand(-1));
-        op6.whileTrue(pivot.pivotArmPID(10));
-        // Hold op7 to smart-agitate: pushes inward until hitting ball pile, backs off, repeats
-        // Each cycle goes deeper as balls are shot out. Hard-limited at -450.
-        op7.whileTrue(pivot.smartAgitateCommand(-100, -400));
-        op1.whileTrue(pivot.pivotArmPID(-300));
-        // Hold op8 to oscillate intake pivot between 10 and -250 (agitate/destuck)
+        // op6: Pivot PID to 0
+        op6.whileTrue(pivot.pivotArmPID(0));
+        // op7: commented out (same as op21 smart agitate)
+        // op8: Fixed oscillation -100/-420, 0.5s each
         op8.whileTrue(
             Commands.repeatingSequence(
                 pivot.pivotArmPID(-100).withTimeout(0.5),
-                pivot.pivotArmPID(-350).withTimeout(0.5)
+                pivot.pivotArmPID(-420).withTimeout(0.5)
             )
-        );   
-       // op6.onTrue(pivot.setPivotGoal(-450).andThen(pivot.pivotArm()));
-        // Hold op9 to move intake pivot to -250 using PID
-        op9.whileTrue(pivot.pivotArmPID(-250));
-        // Hold op10 to move intake pivot to 10 using PID
-        op10.whileTrue(pivot.pivotArmPID(0));
+        );
+        // op9: commented out (was pivot PID to -250)
+        // op10: commented out (was pivot PID to 0)
+        // op11: IntakeRollers -1
         op11.whileTrue(intakeRollers.setSpeedCommand(-1));
+        // op12: IntakeRollers +1
         op12.whileTrue(intakeRollers.setSpeedCommand(1));
+        // op13: Conveyer +1
         op13.whileTrue(conveyer.setSpeedCommand(1));
+        // op14: Conveyer -1
         op14.whileTrue(conveyer.setSpeedCommand(-1));
+        // op15: Elevator +1
         op15.whileTrue(elevator.setSpeedCommand(1));
+        // op16: Elevator -1
         op16.whileTrue(elevator.setSpeedCommand(-1));
-        // Hold op22 to climb to target position using PID (inches)
-        op22.whileTrue(climber.moveToPositionCommand(7));
-        // Hold op23 to retract climber back to 0 using PID
-        op23.whileTrue(climber.moveToPositionCommand(0));
-
-        // Adjustable shooter duty cycle: op17 = +5% and run, op19 = -5% and run
-        op17.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle +0.1, -1.0, 1.0);
-            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
-            shooter.setDutyCycle(shooterDutyCycle);
-        }, shooter));
-        op19.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = MathUtil.clamp(shooterDutyCycle - 0.1, -1.0, 1.0);
-            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
-            shooter.setDutyCycle(shooterDutyCycle);
-        }, shooter));
-        // Adjustable shooter velocity PID: op18= +5 RPS and run, op20 = -5 RPS and run
-        op18.onTrue(Commands.runOnce(() -> {
-            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS + 5.0, -100, 100.0);
-            SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
-            shooter.setVelocityCommand(shooterTargetRPS);
-        }, shooter));
-        op20.onTrue(Commands.runOnce(() -> {
-            shooterTargetRPS = MathUtil.clamp(shooterTargetRPS - 5.0, -100, 100.0);
-            SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
-            shooter.setVelocityCommand(shooterTargetRPS);
-        }, shooter));
-        // op21 = stop shooter and reset both duty cycle and velocity targets
-        op21.onTrue(Commands.runOnce(() -> {
-            shooterDutyCycle = 0.0;
-            shooterTargetRPS = 0.0;
-            SmartDashboard.putNumber("Shooter Target Duty Cycle", shooterDutyCycle);
-            SmartDashboard.putNumber("Shooter Target RPS", shooterTargetRPS);
-            shooter.stop();
-        }, shooter));
+        // op17: commented out (was shooter duty cycle adjust)
+        // op18: Climb to 7"
+        op18.whileTrue(climber.moveToPositionCommand(7));
+        // op19: commented out (was shooter duty cycle adjust)
+        // op20: Retract climber to 0"
+        op20.whileTrue(climber.moveToPositionCommand(0));
+        // op21: Smart agitate intake pivot (-100 to -420)
+        op21.whileTrue(pivot.smartAgitateCommand(-100, -420));
+        // op22–24: unbound
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
@@ -434,8 +389,8 @@ public class RobotContainer {
         test9.whileTrue(shooter.sysIdQuasistatic(Direction.kForward));
         test10.whileTrue(shooter.sysIdQuasistatic(Direction.kReverse));
 
-        // Reset the field-centric heading on start button press.
-        driverStart.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        // Reset the field-centric heading — requires both Start + Back pressed together
+        driverStart.and(driverBack).onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
