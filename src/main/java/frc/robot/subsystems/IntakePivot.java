@@ -4,10 +4,10 @@
 
 package frc.robot.subsystems;
 
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -69,9 +69,12 @@ public class IntakePivot extends SubsystemBase {
         goalPosition = IntakePivotConstants.idlePosition;
     }
 
-    /** Set current limits, configure motors and encoders. */
+    /** Set current limits, configure motors and encoders. Only burn flash if config differs. */
     private void configureDevices() {
         try {
+            // Read the current flash config to see if we need to burn
+            boolean needsBurnFlash = configNeedsBurnFlash();
+
             // Lead pivot motor
             leadMotorConfig = new SparkMaxConfig();
             leadMotorConfig
@@ -80,16 +83,69 @@ public class IntakePivot extends SubsystemBase {
                 .openLoopRampRate(0)
                 .idleMode(IdleMode.kBrake);
 
+            // Soft limits — prevent pivot from going past 0 (forward) or -420 (reverse)
+            leadMotorConfig.softLimit
+                .forwardSoftLimitEnabled(true)
+                .forwardSoftLimit(0.0)
+                .reverseSoftLimitEnabled(true)
+                .reverseSoftLimit(-420.0);
+
             // Convert NEO encoder from motor rotations to mechanism degrees
             // 1 motor rotation = (360 / 35) degrees of pivot
             leadMotorConfig.encoder
                 .positionConversionFactor(70.0 / 7.0)
                 .velocityConversionFactor(70.0 / 7.0 / 12.0);
 
-            leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+            PersistMode persistMode = needsBurnFlash
+                ? PersistMode.kPersistParameters
+                : PersistMode.kNoPersistParameters;
+
+            leaderPivotMotor.configure(leadMotorConfig, ResetMode.kResetSafeParameters, persistMode);
+
+            if (needsBurnFlash) {
+                DriverStation.reportWarning("IntakePivot: Config changed — burned flash!", false);
+            } else {
+                DriverStation.reportWarning("IntakePivot: Config matches flash — skipped burn.", false);
+            }
 
         } catch (Exception ex) {
             DriverStation.reportError("Failed to configure IntakePivot Subsystem", ex.getStackTrace());
+        }
+    }
+
+    /** Compare desired config values against what's already stored in flash. */
+    private boolean configNeedsBurnFlash() {
+        try {
+            var accessor = leaderPivotMotor.configAccessor;
+            double epsilon = 0.01;
+
+            // Check current limit
+            if (accessor.getSmartCurrentLimit() != 20) return true;
+
+            // Check inverted
+            if (accessor.getInverted() != false) return true;
+
+            // Check idle mode
+            if (accessor.getIdleMode() != IdleMode.kBrake) return true;
+
+            // Check open loop ramp rate
+            if (Math.abs(accessor.getOpenLoopRampRate() - 0.0) > epsilon) return true;
+
+            // Check soft limits
+            if (!accessor.softLimit.getForwardSoftLimitEnabled()) return true;
+            if (Math.abs(accessor.softLimit.getForwardSoftLimit() - 0.0) > epsilon) return true;
+            if (!accessor.softLimit.getReverseSoftLimitEnabled()) return true;
+            if (Math.abs(accessor.softLimit.getReverseSoftLimit() - (-420.0)) > epsilon) return true;
+
+            // Check encoder conversion factors
+            if (Math.abs(accessor.encoder.getPositionConversionFactor() - (70.0 / 7.0)) > epsilon) return true;
+            if (Math.abs(accessor.encoder.getVelocityConversionFactor() - (70.0 / 7.0 / 12.0)) > epsilon) return true;
+
+            return false;  // Everything matches — no burn needed
+        } catch (Exception ex) {
+            // If we can't read config, burn flash to be safe
+            DriverStation.reportWarning("IntakePivot: Could not read config — will burn flash.", false);
+            return true;
         }
     }
 
@@ -230,11 +286,11 @@ public class IntakePivot extends SubsystemBase {
 
         // Thresholds — conservative for 100:1 gear reduction
         final double HIT_CURRENT_THRESHOLD = 15.0;   // amps — huge torque at 100:1
-        final double STALL_VELOCITY_THRESHOLD = 473.0; // ~1/10 of max motor converted velocity — stalled
+        final double STALL_VELOCITY_THRESHOLD = 250.0; // ~1/20 of max motor converted velocity — stalled
         final double RETREAT_AMOUNT = 150.0;         // back off this many encoder units after a hit
-        final int GRACE_CYCLES = 10;                  // ~100ms — let motor accelerate before checking
+        final int GRACE_CYCLES = 10;                  // ~200ms — let motor accelerate before checking
         final double ARRIVE_TOLERANCE = 15.0;        // "close enough" to retreat target
-        final int PAUSE_CYCLES = 12;                 // ~0.25s pause between cycles
+        final int PAUSE_CYCLES = 7;                 // ~0.25s pause between cycles
 
         final int[] cycleCount = { 0 };
         final int[] hitCount = { 0 };
@@ -265,7 +321,8 @@ public class IntakePivot extends SubsystemBase {
                     cycleCount[0] = 0;
                     hitCount[0]++;
                     lastHitPos[0] = pos;
-                    targetPos[0] = Math.min(pos + RETREAT_AMOUNT, startPos);
+                    // Clamp retreat target: never go past startPos or past 0
+                    targetPos[0] = Math.min(pos + RETREAT_AMOUNT, Math.min(startPos, 0.0));
                 }
             } else if (!pausing[0]) {
                 // Retreating — wait for arm to actually reach retreat position
@@ -282,6 +339,9 @@ public class IntakePivot extends SubsystemBase {
                     cycleCount[0] = 0;
                 }
             }
+
+            // Clamp target so we never go past 0 (positive direction)
+            targetPos[0] = Math.min(targetPos[0], 0.0);
 
             // PID drive toward current target
             double output = pivotController.calculate(pos, targetPos[0]);
