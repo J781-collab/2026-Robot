@@ -40,7 +40,7 @@ public class IntakeRollers extends SubsystemBase {
       intakeMotorConfig = new SparkMaxConfig();
       intakeMotorConfig
         .idleMode(IdleMode.kCoast)
-        .smartCurrentLimit(60);
+        .smartCurrentLimit(80);
 
       intakeMotor.configure(intakeMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     } catch (Exception ex) {

@@ -6,6 +6,8 @@ package frc.robot;
 
 import com.ctre.phoenix6.HootAutoReplay;
 
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -21,6 +23,9 @@ public class Robot extends TimedRobot {
         .withJoystickReplay();
 
     public Robot() {
+        // Serve deploy directory for Elastic remote layout downloading
+        WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
         // Port forward Limelight 3A USB web interfaces through roboRIO
         LimelightHelpers.setupPortForwardingUSB(0); // First camera (llone)
         LimelightHelpers.setupPortForwardingUSB(1); // Second camera (lltwo)

@@ -71,12 +71,6 @@
           "data": {
             "pathName": "DepoToShoot"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "shootSequence"
-          }
         }
       ]
     }

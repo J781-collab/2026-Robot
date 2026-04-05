@@ -40,6 +40,7 @@ public class IntakePivot extends SubsystemBase {
     private PIDController pivotController;
 
     private double goalPosition;
+    private boolean isCoastMode = false;
 
     public IntakePivot() {
         // Config pivot motor
@@ -75,7 +76,7 @@ public class IntakePivot extends SubsystemBase {
             leadMotorConfig = new SparkMaxConfig();
             leadMotorConfig
                 .inverted(false)
-                .smartCurrentLimit(7)  // Low limit — 100:1 gear ratio means huge torque
+                .smartCurrentLimit(20)  // Low limit — 100:1 gear ratio means huge torque
                 .openLoopRampRate(0)
                 .idleMode(IdleMode.kBrake);
 
@@ -109,6 +110,7 @@ public class IntakePivot extends SubsystemBase {
         SmartDashboard.putNumber("IntakePivot PID Error", pivotController.getPositionError());
         SmartDashboard.putBoolean("IntakePivot At Goal", Math.abs(getPivotEncoderPosition() - goalPosition) < 0.5);
         SmartDashboard.putData("IntakePivot PID", pivotController);
+        SmartDashboard.putString("IntakePivot Idle Mode", isCoastMode ? "Coast" : "Brake");
         SmartDashboard.putData(this);
     }
 
@@ -227,10 +229,10 @@ public class IntakePivot extends SubsystemBase {
         final boolean[] pushingInward = { true };
 
         // Thresholds — conservative for 100:1 gear reduction
-        final double HIT_CURRENT_THRESHOLD = 4.0;   // amps — huge torque at 100:1
+        final double HIT_CURRENT_THRESHOLD = 15.0;   // amps — huge torque at 100:1
         final double STALL_VELOCITY_THRESHOLD = 473.0; // ~1/10 of max motor converted velocity — stalled
         final double RETREAT_AMOUNT = 150.0;         // back off this many encoder units after a hit
-        final int GRACE_CYCLES = 5;                  // ~100ms — let motor accelerate before checking
+        final int GRACE_CYCLES = 10;                  // ~100ms — let motor accelerate before checking
         final double ARRIVE_TOLERANCE = 15.0;        // "close enough" to retreat target
         final int PAUSE_CYCLES = 12;                 // ~0.25s pause between cycles
 
@@ -310,6 +312,7 @@ public class IntakePivot extends SubsystemBase {
         SparkMaxConfig coastConfig = new SparkMaxConfig();
         coastConfig.idleMode(IdleMode.kCoast);
         leaderPivotMotor.configure(coastConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        isCoastMode = true;
     }
 
     /** Set the intake pivot motor to brake mode. */
@@ -317,5 +320,6 @@ public class IntakePivot extends SubsystemBase {
         SparkMaxConfig brakeConfig = new SparkMaxConfig();
         brakeConfig.idleMode(IdleMode.kBrake);
         leaderPivotMotor.configure(brakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        isCoastMode = false;
     }
 }
