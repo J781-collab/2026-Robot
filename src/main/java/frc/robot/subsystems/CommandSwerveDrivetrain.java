@@ -512,6 +512,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
+     * Gets the rotation from the robot to an arbitrary field-relative point.
+     * The robot will face AWAY from the point (shooter faces the point, robot drives backward).
+     * @param target The field-relative point to aim at
+     * @return Rotation2d pointing the shooter toward the target
+     */
+    public Rotation2d getRotationToFieldPoint(Translation2d target) {
+        return target
+            .minus(getPose().getTranslation())
+            .getAngle()
+            .rotateBy(Rotation2d.k180deg);
+    }
+
+    /**
      * Gets the floor-plane distance (meters) to the nearest visible AprilTag
      * using Limelight target-space pose data. Checks LL1 first, then LL2.
      * Returns 0 if no tag is visible on either camera.

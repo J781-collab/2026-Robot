@@ -25,6 +25,21 @@ public class Constants {
          *  Based on field data: hub is ~1.2m deep (front wall x≈11.31, back wall x≈12.52),
          *  so center is ~0.6m from each wall. */
         public static double HUB_DEPTH_OFFSET = 0.6;
+
+        /** Pass shot targets — field-relative (X, Y) coordinates in meters.
+         *  Robot picks left vs right based on which side of the field it's on.
+         *  Blue alliance: shoot to our own side for later use.
+         *  Red alliance: mirrored targets on the red side. */
+        public static Translation2d BLUE_PASS_RIGHT = new Translation2d(1.793, 2.039);
+        public static Translation2d BLUE_PASS_LEFT  = new Translation2d(1.793, 6.149);
+        public static Translation2d RED_PASS_RIGHT  = new Translation2d(14.693, 6.149);
+        public static Translation2d RED_PASS_LEFT   = new Translation2d(14.53, 2.039);
+
+        /** Y-coordinate of the field centerline for left/right detection. */
+        public static double FIELD_CENTER_Y = 4.1;
+
+        /** Max shooter speed (RPS) for pass shots. */
+        public static double PASS_SHOT_RPS = -100.0;
     }
 
 

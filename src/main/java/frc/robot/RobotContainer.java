@@ -279,6 +279,40 @@ public class RobotContainer {
 
             )
         );
+        // Hold LT to pass shot — aim at alliance-side pass target and shoot at max speed
+        // Picks left vs right target based on which side of the field the robot is on
+        // Includes ±7° rotation agitation like driverRB
+        driverLT.whileTrue(
+            Commands.parallel(
+                drivetrain.applyRequest(() -> {
+                    boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+                    double robotY = drivetrain.getPose().getY();
+                    boolean isLeftSide = robotY > ShootingConstants.FIELD_CENTER_Y;
+
+                    // Pick the correct pass target based on alliance and field side
+                    edu.wpi.first.math.geometry.Translation2d passTarget;
+                    if (isRed) {
+                        passTarget = isLeftSide ? ShootingConstants.RED_PASS_LEFT : ShootingConstants.RED_PASS_RIGHT;
+                    } else {
+                        passTarget = isLeftSide ? ShootingConstants.BLUE_PASS_LEFT : ShootingConstants.BLUE_PASS_RIGHT;
+                    }
+
+                    Rotation2d aimAngle = drivetrain.getRotationToFieldPoint(passTarget);
+                    // Joystick driving
+                    double driveX = ((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
+                    double driveY = ((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
+                    // Agitate: oscillate rotation ±7° around the aim angle (~6 Hz)
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    Rotation2d agitatedAngle = aimAngle.rotateBy(Rotation2d.fromRadians(shakeRadians));
+                    return driveAimAtTag
+                        .withVelocityX(driveX)
+                        .withVelocityY(driveY)
+                        .withTargetDirection(agitatedAngle);
+                }),
+                shooter.setVelocityCommand(ShootingConstants.PASS_SHOT_RPS)
+            )
+        );
+        
       //  driverLB.onFalse(/*pivot.setPivotGoal(0).andthen*/pivot.pivotArm(250));
 
         // Shooter — hold RT to spin up with velocity PID, release to stop
@@ -372,7 +406,7 @@ public class RobotContainer {
         driverB.whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(driverController.getRawAxis(1), driverController.getRawAxis(0)))
         ));
-    
+                
         // SignalLogger stop for SysId — press after tests are done
         test12.onTrue(Commands.runOnce(SignalLogger::stop));
 
