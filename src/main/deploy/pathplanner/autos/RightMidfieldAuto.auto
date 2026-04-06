@@ -19,6 +19,12 @@
                 "data": {
                   "name": "intake"
                 }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "climbUp"
+                }
               }
             ]
           }
@@ -39,6 +45,18 @@
           "type": "named",
           "data": {
             "name": "aimAndShoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "rightClimb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climbPullUp"
           }
         }
       ]

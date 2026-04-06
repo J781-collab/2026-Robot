@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "rightToShoot"
+                  "pathName": "left shoot"
                 }
               },
               {
@@ -32,19 +32,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "rightClimb"
+            "pathName": "leftClimb"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "climbPullUp"
+            "name": "climbUp"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Right",
+  "folder": "left",
   "choreoAuto": false
 }

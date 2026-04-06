@@ -162,7 +162,9 @@ public class RobotContainer {
         NamedCommands.registerCommand("intakeRollers", intakeRollers.setSpeedCommand(1.0));*/
         NamedCommands.registerCommand("conveyer", conveyer.smartCommand(1.0));
         NamedCommands.registerCommand("elevator", elevator.smartCommand(1.0));
-        NamedCommands.registerCommand("climb", climber.setSpeedCommand(1.0));
+        NamedCommands.registerCommand("climbUp", climber.moveToPositionCommand(7.0).until(() -> climber.atTarget()));
+        NamedCommands.registerCommand("climbPullUp", climber.moveToPositionCommand(0.5));
+
         // Lower intake pivot to 0 and run intake rollers with jam detection
         NamedCommands.registerCommand("intake",
             Commands.parallel(
