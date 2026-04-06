@@ -19,6 +19,12 @@
                 "data": {
                   "name": "intake"
                 }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "climbUp"
+                }
               }
             ]
           }
@@ -57,19 +63,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "shootToDepot"
+            "pathName": "leftClimb"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "DepoToShoot"
+            "name": "climbPullUp"
           }
         }
       ]
