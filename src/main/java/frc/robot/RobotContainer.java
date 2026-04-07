@@ -162,8 +162,8 @@ public class RobotContainer {
         NamedCommands.registerCommand("intakeRollers", intakeRollers.setSpeedCommand(1.0));*/
         NamedCommands.registerCommand("conveyer", conveyer.smartCommand(1.0));
         NamedCommands.registerCommand("elevator", elevator.smartCommand(1.0));
-        NamedCommands.registerCommand("climbUp", climber.moveToPositionCommand(7.0).until(() -> climber.atTarget()));
-        NamedCommands.registerCommand("climbPullUp", climber.moveToPositionCommand(0.5));
+        NamedCommands.registerCommand("climbUp", climber.moveToPositionCommand(-5).until(() -> climber.atTarget()));
+        NamedCommands.registerCommand("climbPullUp", climber.moveToPositionCommand(-0.5));
 
         // Lower intake pivot to 0 and run intake rollers with jam detection
         NamedCommands.registerCommand("intake",
@@ -196,6 +196,8 @@ public class RobotContainer {
                 // Spin up shooter at interpolated speed based on Limelight distance
                 shooter.setVelocityDynamicCommand(
                     () -> Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance())),
+                // Smart agitate intake pivot to help feed balls
+                pivot.smartAgitateCommand(-100, -420),
                 // Wait for speed, pause 1s for aim to settle, then feed
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(
@@ -260,15 +262,21 @@ public class RobotContainer {
       //  driverY.whileTrue(pivot.setPivotGoal(15).andThen(pivot.pivotArm()));
         // Schedule `set` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        // driverRT feeds only when shooter is within 10 RPS of interpolated target
+        // driverRT feeds only when shooter is at speed — works with both driverRB (interpolated) and driverLT (pass shot)
+        // If LT is held (pass shot), check pass shot speed; otherwise check interpolated speed
         driverRT.whileTrue(
             Commands.parallel(
                 conveyer.smartCommand(1),
                 elevator.smartCommand(1),
                 intakeRollers.setSpeedCommand(-1)
             ).beforeStarting(Commands.waitUntil(
-                () -> shooter.atTargetVelocity(
-                    Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)
+                () -> {
+                    if (driverLT.getAsBoolean()) {
+                        return shooter.atTargetVelocity(ShootingConstants.PASS_SHOT_RPS, 10.0);
+                    }
+                    return shooter.atTargetVelocity(
+                        Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0);
+                }
             ))
         );
         // Hold LB to deploy intake (pivot to 0°) and run rollers with jam detection
@@ -279,7 +287,7 @@ public class RobotContainer {
 
             )
         );
-        // Hold LT to pass shot — aim at alliance-side pass target and shoot at max speed
+        // Hold LT to pass shot — aim at alliance-side pass target, shoot at max speed, agitate, and feed
         // Picks left vs right target based on which side of the field the robot is on
         // Includes ±7° rotation agitation like driverRB
         driverLT.whileTrue(
@@ -309,7 +317,18 @@ public class RobotContainer {
                         .withVelocityY(driveY)
                         .withTargetDirection(agitatedAngle);
                 }),
-                shooter.setVelocityCommand(ShootingConstants.PASS_SHOT_RPS)
+                shooter.setVelocityCommand(ShootingConstants.PASS_SHOT_RPS),
+                // Smart agitate intake pivot to help feed balls
+               
+                // Wait for shooter to reach speed, then feed
+                Commands.sequence(
+                    Commands.waitUntil(() -> shooter.atTargetVelocity(ShootingConstants.PASS_SHOT_RPS, 10.0)),
+                    Commands.parallel(
+                        conveyer.smartCommand(1.0),
+                        elevator.smartCommand(1.0),
+                        intakeRollers.smartIntakeCommand(-1)
+                    )
+                )
             )
         );
         
@@ -381,7 +400,7 @@ public class RobotContainer {
         op16.whileTrue(elevator.setSpeedCommand(-1));
         // op17: commented out (was shooter duty cycle adjust)
         // op18: Climb to 7"
-        op18.whileTrue(climber.moveToPositionCommand(7));
+        op18.whileTrue(climber.moveToPositionCommand(-5));
         // op19: commented out (was shooter duty cycle adjust)
         // op20: Retract climber to 0"
         op20.whileTrue(climber.moveToPositionCommand(0));

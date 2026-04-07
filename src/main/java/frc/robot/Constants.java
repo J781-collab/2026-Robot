@@ -30,10 +30,13 @@ public class Constants {
          *  Robot picks left vs right based on which side of the field it's on.
          *  Blue alliance: shoot to our own side for later use.
          *  Red alliance: mirrored targets on the red side. */
-        public static Translation2d BLUE_PASS_RIGHT = new Translation2d(1.793, 2.039);
-        public static Translation2d BLUE_PASS_LEFT  = new Translation2d(1.793, 6.149);
-        public static Translation2d RED_PASS_RIGHT  = new Translation2d(14.693, 6.149);
-        public static Translation2d RED_PASS_LEFT   = new Translation2d(14.53, 2.039);
+    
+ public static Translation2d BLUE_PASS_LEFT = new Translation2d(1.793, 2.039);
+        public static Translation2d BLUE_PASS_RIGHT  = new Translation2d(1.793, 6.149);
+        public static Translation2d RED_PASS_LEFT  = new Translation2d(14.693, 6.149);
+        public static Translation2d RED_PASS_RIGHT   = new Translation2d(14.53, 2.039);
+
+        
 
         /** Y-coordinate of the field centerline for left/right detection. */
         public static double FIELD_CENTER_Y = 4.1;

@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -25,9 +25,9 @@ public class Climber extends SubsystemBase {
     private PIDController pidController1;
     
     // PID Gains
-    private static final double kP = 0.1;
-    private static final double kI = 0.01;
-    private static final double kD = 0.05;
+    private static final double kP = 1;
+    private static final double kI = 0.00;
+    private static final double kD = 0.005;
     
     private double targetHeight = 0.0;
     private boolean usePID = false;
@@ -45,6 +45,8 @@ public class Climber extends SubsystemBase {
         pidController1.setTolerance(0.5, 0.5);
         
         configureDevices();
+
+        zeroEncoder();
     }
     
     private void configureDevices() {
@@ -110,14 +112,16 @@ public class Climber extends SubsystemBase {
     
     @Override
     public void periodic() {
+        // Always publish telemetry
+        SmartDashboard.putNumber("Climber/Target Height", targetHeight);
+        SmartDashboard.putNumber("Climber Motor Height", encoder1.getPosition());
+        SmartDashboard.putBoolean("Climber/At Target", atTarget());
+        SmartDashboard.putNumber("Climber Motor Power", climbmotor1.getAppliedOutput());
+
         if (usePID) {
             double output1 = pidController1.calculate(encoder1.getPosition(), targetHeight);
             output1 = Math.max(-1.0, Math.min(1.0, output1));
             climbmotor1.set(output1);
-            
-            SmartDashboard.putNumber("Climber/Target Height", targetHeight);
-            SmartDashboard.putNumber("Climber/Motor Height", encoder1.getPosition());
-            SmartDashboard.putBoolean("Climber/At Target", atTarget());
             SmartDashboard.putNumber("Climber/Motor Output", output1);
         }
     }
@@ -145,6 +149,7 @@ public class Climber extends SubsystemBase {
      */
     public Command moveToPositionCommand(double position) {
         return this.run(() -> {
+            targetHeight = position;
             double output = pidController1.calculate(encoder1.getPosition(), position);
             output = Math.max(-1.0, Math.min(1.0, output));
             climbmotor1.set(output);
@@ -159,6 +164,10 @@ public class Climber extends SubsystemBase {
     public void stop() {
         usePID = false;
         climbmotor1.set(0);
+    }
+
+      public void zeroEncoder() {
+        encoder1.setPosition(0);
     }
 
 }
