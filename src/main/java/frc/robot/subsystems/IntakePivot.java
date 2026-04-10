@@ -287,10 +287,10 @@ public class IntakePivot extends SubsystemBase {
         // Thresholds — conservative for 100:1 gear reduction
         final double HIT_CURRENT_THRESHOLD = 15.0;   // amps — huge torque at 100:1
         final double STALL_VELOCITY_THRESHOLD = 250.0; // ~1/20 of max motor converted velocity — stalled
-        final double RETREAT_AMOUNT = 150.0;         // back off this many encoder units after a hit
+        final double RETREAT_AMOUNT = 200.0;         // back off this many encoder units after a hit
         final int GRACE_CYCLES = 10;                  // ~200ms — let motor accelerate before checking
         final double ARRIVE_TOLERANCE = 15.0;        // "close enough" to retreat target
-        final int PAUSE_CYCLES = 7;                 // ~0.25s pause between cycles
+        final int PAUSE_CYCLES = 14;                 // ~0.25s pause between cycles
 
         final int[] cycleCount = { 0 };
         final int[] hitCount = { 0 };

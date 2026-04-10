@@ -5,34 +5,52 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "path",
+          "data": {
+            "pathName": "CentreLeft"
+          }
+        },
+        {
+          "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "rightToShoot"
+                  "pathName": "LeftStartToMidfield"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "climbUp"
+                  "name": "intake"
                 }
               }
             ]
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "MidToShoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RotateToShoot"
+          }
+        },
+        {
           "type": "named",
           "data": {
-            "name": "aimAndShoot"
+            "name": "shootSequence"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Right",
+  "folder": "Middle",
   "choreoAuto": false
 }

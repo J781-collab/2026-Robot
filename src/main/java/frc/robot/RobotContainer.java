@@ -186,6 +186,10 @@ public class RobotContainer {
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
                         ? drivetrain.getAimCompensatedRotation(tag, tag)
                         : drivetrain.getRotationRelativeMidpoint(tag, tag);
+                    // On Blue, the 180° flip in getRotationRelativeMidpoint faces the wrong way — undo it
+                    if (!isRed) {
+                        aimAngle = aimAngle.rotateBy(Rotation2d.k180deg);
+                    }
                     double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
                     Rotation2d agitatedAngle = aimAngle.rotateBy(Rotation2d.fromRadians(shakeRadians));
                     return driveAimAtTag
@@ -202,7 +206,7 @@ public class RobotContainer {
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(
                         Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)),
-                    Commands.waitSeconds(2.0),
+                    
                     Commands.parallel(
                         conveyer.smartCommand(1.0),
                         elevator.smartCommand(1.0),
@@ -319,7 +323,7 @@ public class RobotContainer {
                 }),
                 shooter.setVelocityCommand(ShootingConstants.PASS_SHOT_RPS),
                 // Smart agitate intake pivot to help feed balls
-               
+                pivot.smartAgitateCommand(-100, -420),
                 // Wait for shooter to reach speed, then feed
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(ShootingConstants.PASS_SHOT_RPS, 10.0)),
@@ -347,6 +351,10 @@ public class RobotContainer {
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
                         ? drivetrain.getAimCompensatedRotation(tag, tag)
                         : drivetrain.getRotationRelativeMidpoint(tag, tag);
+                    // On Blue, the 180° flip in getRotationRelativeMidpoint faces the wrong way — undo it
+                    if (!isRed) {
+                        aimAngle = aimAngle.rotateBy(Rotation2d.k180deg);
+                    }
                     // Joystick driving
                     double driveX = ((driverController.getRawAxis(1)*driverController.getRawAxis(1)) * (driverController.getRawAxis(1)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
                     double driveY = ((driverController.getRawAxis(0)*driverController.getRawAxis(0)) * (driverController.getRawAxis(0)>0 ? -1 : 1)) * MaxSpeed * (driverLB.getAsBoolean() ? 0.3 : 1.0);
@@ -406,7 +414,48 @@ public class RobotContainer {
         op20.whileTrue(climber.moveToPositionCommand(0));
         // op21: Smart agitate intake pivot (-100 to -420)
         op21.whileTrue(pivot.smartAgitateCommand(-100, -420));
-        // op22–24: unbound
+        // op22: Shoot at ~0.75m speed (-65 RPS) with ±7° rotation shake (no auto-aim)
+        op22.whileTrue(
+            Commands.parallel(
+                shooter.setVelocityCommand(-65.0),
+                drivetrain.applyRequest(() -> {
+                    Rotation2d currentHeading = drivetrain.getPose().getRotation();
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    return driveAimAtTag
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withTargetDirection(currentHeading.rotateBy(Rotation2d.fromRadians(shakeRadians)));
+                })
+            )
+        );
+        // op23: Shoot at ~2m speed (-82 RPS) with ±7° rotation shake (no auto-aim)
+        op23.whileTrue(
+            Commands.parallel(
+                shooter.setVelocityCommand(-82.0),
+                drivetrain.applyRequest(() -> {
+                    Rotation2d currentHeading = drivetrain.getPose().getRotation();
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    return driveAimAtTag
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withTargetDirection(currentHeading.rotateBy(Rotation2d.fromRadians(shakeRadians)));
+                })
+            )
+        );
+        // op24: Shoot at ~3m speed (-96 RPS) with ±7° rotation shake (no auto-aim)
+        op24.whileTrue(
+            Commands.parallel(
+                shooter.setVelocityCommand(-96.0),
+                drivetrain.applyRequest(() -> {
+                    Rotation2d currentHeading = drivetrain.getPose().getRotation();
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    return driveAimAtTag
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withTargetDirection(currentHeading.rotateBy(Rotation2d.fromRadians(shakeRadians)));
+                })
+            )
+        );
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
@@ -425,6 +474,8 @@ public class RobotContainer {
         driverB.whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(driverController.getRawAxis(1), driverController.getRawAxis(0)))
         ));
+
+
                 
         // SignalLogger stop for SysId — press after tests are done
         test12.onTrue(Commands.runOnce(SignalLogger::stop));

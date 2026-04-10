@@ -5,7 +5,7 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -19,12 +19,6 @@
                 "data": {
                   "name": "intake"
                 }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "climbUp"
-                }
               }
             ]
           }
@@ -37,12 +31,6 @@
                 "type": "path",
                 "data": {
                   "pathName": "MidToShoot"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
                 }
               }
             ]
@@ -58,18 +46,6 @@
           "type": "named",
           "data": {
             "name": "aimAndShoot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "leftClimb"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climbPullUp"
           }
         }
       ]
