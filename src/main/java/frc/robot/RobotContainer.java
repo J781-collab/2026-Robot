@@ -182,7 +182,7 @@ public class RobotContainer {
                 // Auto-aim at the hub with rotation agitation (±7° shake ~6 Hz)
                 drivetrain.applyRequest(() -> {
                     boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                    int tag = isRed ? 10 : 25;
+                    int tag = isRed ? 10 : 26;
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
                         ? drivetrain.getAimCompensatedRotation(tag, tag)
                         : drivetrain.getRotationRelativeMidpoint(tag, tag);
@@ -347,7 +347,7 @@ public class RobotContainer {
             Commands.parallel(
                 drivetrain.applyRequest(() -> {
                     boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
-                    int tag = isRed ? 10 : 25;
+                    int tag = isRed ? 10 : 26;
                     Rotation2d aimAngle = ShootingConstants.ENABLE_AIM_COMPENSATION
                         ? drivetrain.getAimCompensatedRotation(tag, tag)
                         : drivetrain.getRotationRelativeMidpoint(tag, tag);
@@ -417,7 +417,33 @@ public class RobotContainer {
         // op22: Shoot at ~0.75m speed (-65 RPS) with ±7° rotation shake (no auto-aim)
         op22.whileTrue(
             Commands.parallel(
-                shooter.setVelocityCommand(-65.0),
+                shooter.setVelocityCommand(-72.0),
+                drivetrain.applyRequest(() -> {
+                    Rotation2d currentHeading = drivetrain.getPose().getRotation();
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    return driveAimAtTag
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withTargetDirection(currentHeading.rotateBy(Rotation2d.fromRadians(shakeRadians)));
+                })
+            )
+        );
+           driverA.whileTrue(
+            Commands.parallel(
+                shooter.setVelocityCommand(-69.0),
+                drivetrain.applyRequest(() -> {
+                    Rotation2d currentHeading = drivetrain.getPose().getRotation();
+                    double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
+                    return driveAimAtTag
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withTargetDirection(currentHeading.rotateBy(Rotation2d.fromRadians(shakeRadians)));
+                })
+            )
+        );
+            driverY.whileTrue(
+            Commands.parallel(
+                shooter.setVelocityCommand(-100.0),
                 drivetrain.applyRequest(() -> {
                     Rotation2d currentHeading = drivetrain.getPose().getRotation();
                     double shakeRadians = Math.toRadians(7.0) * Math.sin(Timer.getFPGATimestamp() * 6.0 * 2.0 * Math.PI);
@@ -470,7 +496,7 @@ public class RobotContainer {
             Commands.runOnce(() -> pivot.setBrakeMode())
         );
 
-        driverA.whileTrue(drivetrain.applyRequest(() -> brake));
+      //  driverA.whileTrue(drivetrain.applyRequest(() -> brake));
         driverB.whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(driverController.getRawAxis(1), driverController.getRawAxis(0)))
         ));

@@ -5,22 +5,9 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Depo"
-                }
-              }
-            ]
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "DepoMidToDepot"
+            "pathName": "MiddleToDepot"
           }
         },
         {
@@ -30,7 +17,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "sweepDepot"
+                  "pathName": "DepotIntake"
                 }
               },
               {
@@ -45,7 +32,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "DepoToShoot"
+            "pathName": "DepotToShoot"
           }
         },
         {

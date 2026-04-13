@@ -24,7 +24,7 @@ public class Constants {
          *  The aim point is shifted this far behind the tag surface.
          *  Based on field data: hub is ~1.2m deep (front wall x≈11.31, back wall x≈12.52),
          *  so center is ~0.6m from each wall. */
-        public static double HUB_DEPTH_OFFSET = 0.6;
+        public static double HUB_DEPTH_OFFSET = -0.6;
 
         /** Pass shot targets — field-relative (X, Y) coordinates in meters.
          *  Robot picks left vs right based on which side of the field it's on.
