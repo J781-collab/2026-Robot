@@ -208,7 +208,7 @@ public class RobotContainer {
                         Shooter.getInterpolatedSpeed(drivetrain.getLimelightAprilTagDistance()), 10.0)),
                     
                     Commands.parallel(
-                        conveyer.smartCommand(1.0),
+                        conveyer.smartCommand(0.4),
                         elevator.smartCommand(1.0),
                         intakeRollers.smartIntakeCommand(-1)
                     )
@@ -270,7 +270,7 @@ public class RobotContainer {
         // If LT is held (pass shot), check pass shot speed; otherwise check interpolated speed
         driverRT.whileTrue(
             Commands.parallel(
-                conveyer.smartCommand(1),
+                conveyer.smartCommand(0.4),
                 elevator.smartCommand(1),
                 intakeRollers.setSpeedCommand(-1)
             ).beforeStarting(Commands.waitUntil(
@@ -328,7 +328,7 @@ public class RobotContainer {
                 Commands.sequence(
                     Commands.waitUntil(() -> shooter.atTargetVelocity(ShootingConstants.PASS_SHOT_RPS, 10.0)),
                     Commands.parallel(
-                        conveyer.smartCommand(1.0),
+                        conveyer.smartCommand(0.4),
                         elevator.smartCommand(1.0),
                         intakeRollers.smartIntakeCommand(-1)
                     )
@@ -373,7 +373,7 @@ public class RobotContainer {
         // ===== OPERATOR PANEL BINDINGS (numerical order) =====
 
         // op1: Pivot PID to -300
-        op1.whileTrue(pivot.pivotArmPID(-300));
+        op1.whileTrue(pivot.pivotArmPID(-350));
         // op2: Pivot PID to -50
         op2.whileTrue(pivot.pivotArmPID(-50));
         // op3: commented out (was intakeRollers speed 1)
@@ -496,10 +496,9 @@ public class RobotContainer {
             Commands.runOnce(() -> pivot.setBrakeMode())
         );
 
-      //  driverA.whileTrue(drivetrain.applyRequest(() -> brake));
-        driverB.whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(driverController.getRawAxis(1), driverController.getRawAxis(0)))
-        ));
+        driverB.whileTrue(drivetrain.applyRequest(() -> brake));
+        /*driverB.whileTrue(drivetrain.applyRequest(() ->
+            point.withModuleDirection(new Rotation2d(driverController.getRawAxis(1), driverController.getRawAxis(0)))  ));*/
 
 
                 

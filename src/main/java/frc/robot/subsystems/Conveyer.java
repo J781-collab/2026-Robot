@@ -23,8 +23,8 @@ public class Conveyer extends SubsystemBase {
   private RelativeEncoder encoder;
 
   // Jam detection thresholds (motor-side RPM)
-  private static final double JAM_VELOCITY_THRESHOLD = 100.0;
-  private static final double UNJAM_VELOCITY_THRESHOLD = 200.0;
+  private static final double JAM_VELOCITY_THRESHOLD = 500.0;
+  private static final double UNJAM_VELOCITY_THRESHOLD = 700.0;
   private static final double STARTUP_GRACE_SECONDS = 0.25;
 
   /** Creates a new Conveyer. */
@@ -41,7 +41,7 @@ public class Conveyer extends SubsystemBase {
       motorConfig = new SparkMaxConfig();
       motorConfig
         .idleMode(IdleMode.kCoast)
-        .smartCurrentLimit(40);
+        .smartCurrentLimit(60);
 
       motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     } catch (Exception ex) {

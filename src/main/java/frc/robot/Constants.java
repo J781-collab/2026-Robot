@@ -4,6 +4,8 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Constants {
     
@@ -22,9 +24,14 @@ public class Constants {
 
         /** Depth offset (meters) from the AprilTag wall to the center of the hub. 
          *  The aim point is shifted this far behind the tag surface.
-         *  Based on field data: hub is ~1.2m deep (front wall x≈11.31, back wall x≈12.52),
-         *  so center is ~0.6m from each wall. */
-        public static double HUB_DEPTH_OFFSET = -0.6;
+         *  +0.6 for Red, -0.6 for Blue. Use getHubDepthOffset(). */
+        public static final double HUB_DEPTH_OFFSET = 0.6;
+
+        /** Returns alliance-aware hub depth offset: +0.6 Red, -0.6 Blue. */
+        public static double getHubDepthOffset() {
+            boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+            return isRed ? HUB_DEPTH_OFFSET : -HUB_DEPTH_OFFSET;
+        }
 
         /** Pass shot targets — field-relative (X, Y) coordinates in meters.
          *  Robot picks left vs right based on which side of the field it's on.

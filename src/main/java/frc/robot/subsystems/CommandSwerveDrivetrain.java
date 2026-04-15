@@ -429,7 +429,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .div(2.0);
 
         // Offset the midpoint INTO the hub (opposite of tag facing direction)
-        Translation2d offset = new Translation2d(-ShootingConstants.HUB_DEPTH_OFFSET, avgFacing);
+        Translation2d offset = new Translation2d(-ShootingConstants.getHubDepthOffset(), avgFacing);
         return midpoint.plus(offset);
     }
 
