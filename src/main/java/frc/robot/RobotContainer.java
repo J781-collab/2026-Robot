@@ -407,7 +407,7 @@ public class RobotContainer {
         // op1: Pivot PID to -300
         op1.whileTrue(pivot.pivotArmPID(-350));
         // op2: Pivot PID to -50
-        op2.whileTrue(pivot.pivotArmPID(-50));
+      //  op2.whileTrue(pivot.pivotArmPID(-50));
         // op3: commented out (was intakeRollers speed 1)
         // op4: commented out (was shooter dynamic velocity)
         // op5: Reverse all — intakeRollers +1, conveyer -1, elevator -1
@@ -445,7 +445,7 @@ public class RobotContainer {
         // op20: Retract climber to 0"
         op20.whileTrue(climber.moveToPositionCommand(0));
         // op21: Smart agitate intake pivot (-100 to -420)
-        op21.whileTrue(pivot.smartAgitateCommand(-100, -420));
+        op2.whileTrue(pivot.smartAgitateCommand(-100, -420));
         // op22: Shoot at ~0.75m speed (-65 RPS) with ±7° rotation shake (no auto-aim)
         op22.whileTrue(
             Commands.parallel(
